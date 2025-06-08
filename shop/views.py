@@ -128,13 +128,17 @@ def order_create_view(request):
 
             if user.account > total:
 
+                apartment = cd['apartment']
+                if cd['is_private']:
+                    apartment = None
+
                 new_order = Order.objects.create(
 
                                 user = user,
                                 street = cd['street'],
                                 is_private = cd['is_private'],
                                 building = cd['building'],
-                                apartment = cd['apartment'],
+                                apartment = apartment,
                                 price = total,    
                             )
             
