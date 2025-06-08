@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Баланс{% endblock title %}
+
+{% block content %}
+
+    <h1 class="h1">балланс</h1>
+
+	<div class="formFeedback">
+		{% if form.errors %}
+			{% for field, error in form.errors.items %}
+				<div class="text text_error">{{ error|striptags }}</div>
+			{% endfor %}
+        {% endif %}
+	</div>
+
+	<form class="form" method="POST">
+		{% csrf_token %}
+		{% for element in form %}
+				<div class="form__group">
+                    <label class="form__label" for="{{ element.id_for_label }}">{{ element.label }}</label>
+                    {{ element }}
+				</div>
+		{% endfor %}
+		<input class="form__submit" type="submit" value="Подтвердить">
+	</form>
+
+{% endblock content %}

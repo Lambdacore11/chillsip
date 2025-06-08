@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказы{% endblock title %}
+
+{% block content %}
+    <h1 class="h1">заказы</h1>
+    {% if not orders %}
+        <div class="text">у вас нет текущих заказов</div>
+
+    {% else %}
+    <table class="table">
+
+            <tr>
+                <th class="th">дата оформления</th>
+                <th class="th">номер заказа</th>
+                <th class="th">адрес</th>
+                <th class="th">товары</th>
+                <th class="th">сумма</th>
+                <th class="th"></th>
+            </tr>
+
+            {% for order in orders %}
+                <tr class="tr">
+                    <td class="td">{{ order.created }}</td>
+                    <td class="td">{{ order.id }}</td>
+                    <td class="td">
+                        {{ order.street }}/д:{{ order.building }}{% if order.apartment %}/кв:{{ order.apartment }}{% endif %}
+                    </td>
+                    <td class="td">
+                        {% for product in order.products.all %}
+                            <a href="{{ product.product.get_absolute_url }}">
+                                <img class="order__image" src="{{ product.product.image.url }}">
+                            </a>
+                        {% endfor %}
+                    </td>
+                    <td class="td">{{ order.price }}₽</td>
+                    <td><a class="link" href="{% url 'shop:order_recieved' order.pk %}">получить заказ</a></td>
+                </tr>
+
+            {% endfor %}
+    </table>
+    {% endif %}
+
+{% endblock content %}

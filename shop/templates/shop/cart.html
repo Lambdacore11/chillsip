@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{%load static %}
+
+{% block title %}Корзина{% endblock title %}
+
+{% block content %}
+    <h1 class="h1">корзина</h1>
+    <div class="text">здесь находятся выбраные вами товары</div>
+    {% if not cart %}
+        <div class="text text_bold">корзина пуста</div>
+
+    {% else %}
+        <table class="table">
+                <tr>
+                    <th class="th"></th>
+                    <th class="th"></th>
+                    <th class="th">количество</th>
+                    <th class="th">цена за единицу</th>
+                    <th class="th">общая цена</th>
+                    <th class="th"></th>
+                </tr>
+
+                {% for item in cart %}
+                    <tr class="tr">
+                        <td class="td">
+                                <a href="{{item.product.get_absolute_url}}">
+                                    <img class="table__image" src="{{item.product.image.url}}"> 
+                                </a>
+                        </td>
+                        <td class="td">{{ item.product }}</td>
+                        <td class="td">
+                            <a href="{% url 'shop:cart_decrement' item.id %}">&lt;</a> 
+                            {{ item.count }}
+                            <a href="{% url 'shop:cart_increment' item.id %}">&gt;</a> 
+                        </td>
+                        <td class="td">{{ item.price }}₽</td>
+                        <td class="td">{{ item.get_cost }}₽</td>
+                        <td class="td">
+                            <a href="{% url 'shop:cart_delete' item.id %}"><img class="table__image" src="{% static 'images/delete.png' %}"></a>
+                        </td>
+                    </tr>
+                
+                {% endfor %}
+                <tr>
+                    <td colspan="6" class="td td_total">всего: {{ total }}₽</td>
+                </tr>
+        </table>
+
+
+        <div class="formFeedback">
+            {% if form.errors %}
+                {% for field, error in form.errors.items %}
+                    <div class="text text_error">{{ error|striptags }}</div>
+                {% endfor %}
+
+            {% else %}
+                <div class="text">укажите адрес доставки</div>
+            {% endif %}
+        </div>
+
+        <form class="form" method="POST" action="{% url 'shop:order_create' %}">
+            {% csrf_token %}
+            {% for element in form %}
+                    <div class="form__group">
+                        <label class="form__label" for="{{ element.id_for_label }}">{{ element.label }}</label>
+                        {{ element }}
+                    </div>
+            {% endfor %}
+            <input type="hidden" name="total" value="{{ total }}">
+            <input class="form__submit" type="submit" value="оформить заказ">
+        </form>
+         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script
+            src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous">
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script src="{% static 'js/shop/cart.js' %}"></script>
+   {% endif %}
+
+{% endblock content %}
+

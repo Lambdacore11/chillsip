@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Товар получен{% endblock title %}
+
+{% block content %}
+    <h1 class="h1">расскажите что вы думаете о наших товарах</h1>
+    {% for product in products %}
+            <div class="item">
+                    <img class="item__image" src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/product_no_image.jpg' %}{% endif %}">
+                    <h2 class="h2">{{ product.name }}</h2>
+            </div>
+            <form class="form" method="POST">
+                {% csrf_token %}
+        
+                <div data-number="{{ forloop.counter }}">
+                        {% for item in form.rating %}             
+                                <img data-number="{{ forloop.counter }}" class="ratingInput__star" src="{% static 'images/rating/star.png' %}">
+                                {{ item.tag }}     
+                        {% endfor %}
+                </div>
+
+                {% for item in form.review %}
+                        <label for="{{item.id_for_label}}">{{ item.label }}</label>
+                        {{ item.tag }}
+                {% endfor %}
+
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input class="form__submit" type="submit" value="отправить отзыв">
+            </form>
+    {% empty %}
+            <div class="text">спасибо за уделеное время</div>
+            <div class="text">ваше мнение очень важно для нас</div>
+    {% endfor %}
+
+    <a class="link" href="{% url 'shop:order_list' %}">вернутся на страницу заказов</a>
+        <script src="{% static 'js/shop/order_recieved.js' %}"></script>
+{% endblock content %}

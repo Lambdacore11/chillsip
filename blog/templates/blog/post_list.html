@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Блог{% endblock title %}
+
+{% block content %}
+    {% for post in posts %}
+        <div class="post">
+            <a href="{{ post.get_absolute_url }}">
+                <img class="post__image" src="{{ post.image.url }}">
+            </a>
+            <a class="link" href="{{ post.get_absolute_url }}">{{ post.name|truncatewords:30 }}</a>
+                <div class="text">{{ post.content|truncatewords:30 }}</div>
+                <div class="user">
+                    <img class="userFoto" src="{% if post.user.foto %}{{post.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
+                    <div class="text text_italic">{{ post.user.username }}</div>
+                </div>
+                <div class="text text_italic">{{ post.created }}</div>
+        </div>
+    {% endfor %}
+{%endblock content %}

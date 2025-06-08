@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Заказ принят{% endblock title %}
+
+{% block content %}
+    <h1 class="h1">ваш заказ принят</h1>
+    <div class="text">
+        Заказ номер "{{ order_id }}"" оформлен
+        <a class="link" href="{% url 'shop:order_list' %}">перейти в раздел заказов</a>
+    </div>
+{% endblock content %}

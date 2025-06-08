@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Каталог{% endblock title %}
+
+{% block content %}
+    <div class="catalog">
+
+        <div class="sidebar">
+            <h3 class="h3">меню</h3>
+            <a class="link {% if not category %}link_selected{% endif %}" href="{% url 'shop:product_list' %}">все</a>
+            {% for cat in categories %}
+                <a class="link {% if category.slug == cat.slug %}link_selected{% endif %}" href="{{ cat.get_absolute_url }}">{{ cat.name }}</a>
+            {% endfor %}
+        </div>
+
+        <div class="catalog__right">
+            {% for product in products %}
+                <div class="item">
+                    <a class="item__link" href="{{ product.get_absolute_url }}">
+                        <img class="item__image" src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/product_no_image.jpg' %}{% endif %}">
+                    </a>
+                    <a class="link" href="{{ product.get_absolute_url }}">{{ product.name }}</a>
+                    <div class="text">{{ product.price }}₽</div>
+
+                    <img class="item__rating" src="{% static product.get_average_rating_url %}">
+                    {% if product.count > 0 %}
+                        <div class="text text_italic">осталось {{ product.count }}</div>
+                    {% else %}
+                        <div class="text text_italic">раскупили</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+    </div>
+{% endblock content %}

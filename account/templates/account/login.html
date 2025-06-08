@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Вход{% endblock title %}
+
+{% block content %}
+
+	<h1 class="h1">вход</h1>
+
+	<div class="formFeedback">
+		{% if form.errors %}
+			{% for field, error in form.errors.items %}
+				<div class="text text_error">{{ error|striptags }}</div>
+			{% endfor %}
+
+		{% else %}
+			<div class="textgroup">
+				<div class="text">заполните форму чтобы войти в систему.</div>
+				<div class="text">
+					если у вас еще нет аккаунта
+					<a class="link" href="{% url 'account:register' %}"> зарегестрируйтесь здесь.</a>
+				</div>
+			</div>
+		{% endif %}
+	</div>
+
+	<form class="form" method="POST">
+		{% csrf_token %}
+		{% for element in form %}
+				<div class="form__group">
+                    <label class="form__label" for="{{ element.id_for_label }}">
+						{{ element.label }}
+					</label>
+                    {{ element }}
+				</div>
+		{% endfor %}
+		<input class="form__submit" type="submit" value="Войти в аккаунт">
+		<input type="hidden" name="next" value="{{ next }}"/>
+	</form>
+	 
+	<a class="link" href="{% url 'account:password_reset' %}">
+		забыли пароль?
+	</a>
+
+{% endblock content %}

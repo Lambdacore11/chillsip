@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}{{ product.name }}{% endblock title %}
+
+{% block content %}
+            <div class="product">
+                <img class="product__image" src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/product_no_image.jpg' %}{% endif %}">
+                <div class="product__right">
+                    <h1 class="h1"> {{ product.name }} </h1>
+                    <a class="link" href="{{ product.category.get_absolute_url }}">
+                        {{ product.category }}
+                    </a>
+                    <div class="text">{{ product.price }}₽</div>
+                    <img class="product__rating" src="{% static product.get_average_rating_url %}">
+                    <div class="text">{{ product.description|linebreaks }}</div>
+                
+                    {% if is_product_in_cart %}
+                        <div class="text text_bold">товар в корзине</div> 
+                    {% elif product.count == 0 %}
+                           <div class="text text_bold">ожидается поступление</div>
+                    {% else %} 
+                        <a class="link" href="{% url 'shop:cart_add' product.id %}">добавить в корзину</a>
+                    {% endif %}
+
+                    <div class="product__reviews">
+                        {% for feed in product.feedback.all %}
+                            {% if feed.review  %}
+                            <div class="comment">
+                                <div class="user">
+                                    <img class="userFoto" src="{% if feed.user.foto %}{{feed.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
+                                    <div class="text text_italic">{{ feed.user.username }}</div>
+                                </div>
+                                <div class="text">{{ feed.review }}</div>
+                                <div class="text text_italic">{{ feed.created }}</div>
+                                {% if user.id == feed.user.id %}
+                                   <form action="{% url 'shop:review_delete' feed.id %}" method="POST">
+                                        {% csrf_token %}
+                                        <input class="form__submit" type="submit" value="удалить коментарий">
+                                   </form>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        {% empty %}
+                            <div class="text text_italic">у данного товара пока нет отзывов.</div>
+                        {% endfor %}
+                    </div>
+                      
+            
+                      
+                </div>
+            </div>
+{% endblock content %}

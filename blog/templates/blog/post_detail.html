@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Пост{% endblock title %}
+
+{% block content %}
+    <div class="post">
+        <img class="post__image" src="{{ post.image.url }}">
+        <h2 class="h2">{{ post.name }}</h2>
+        <div class="text">{{ post.content }}</div>
+    </div>
+
+    <form class="form" method="POST" action="{% url 'blog:comment_create' %}">
+		{% csrf_token %}
+		{% for element in form %}     
+            {{ element }}
+		{% endfor %}
+        <input type="hidden" name="post_id" value="{{ post.id }}">
+		<input class="form__submit" type="submit" value="Оставить комментарий">
+	</form>
+
+    {% for comment in post.comments.all %}
+        <div class="comment">
+            <div class="user">
+                <img class="userFoto" src="{% if comment.user.foto %}{{comment.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
+                <div class="text text_italic">{{ comment.user.username }}</div>
+            </div>
+            <div class="text">{{ comment.content }}</div>
+            <div class="text text_italic">{{ comment.created }}</div>
+            {% if user.id == comment.user.id %}
+            <form action="{% url 'blog:comment_delete' comment.id %}" method="POST">
+                {% csrf_token %}
+                <input class="form__submit" type="submit" value="удалить коментарий">
+            </form>
+            {% endif %}
+    {% empty %}
+        <div class="text">будьте первым кто оставит комментарий</div>
+    {% endfor %}
+
+{% endblock content %}

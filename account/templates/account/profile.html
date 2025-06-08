@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Профиль{% endblock title %}
+
+{% block content %}
+
+    <h1 class="h1">расскажите о себе</h1>
+
+	<div class="formFeedback">
+		{% if form.errors %}
+			{% for field, error in form.errors.items %}
+				<div class="text text_error">{{ error|striptags }}</div>
+			{% endfor %}
+        {% endif %}
+	</div>
+
+	<form class="form" method="POST" enctype="multipart/form-data">
+		{% csrf_token %}
+		{% for element in form %}
+			{% if element != form.foto %}
+				<div class="form__group">
+                    <label class="form__label" for="{{ element.id_for_label }}">{{ element.label }}</label>
+                    {{ element }}
+				</div>
+			{% endif %}
+		{% endfor %}
+		<img class="userFoto margin-t2" src="{% if user.foto %}{{ user.foto.url }}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
+		<div class="form__group form__group_close">
+			<label class="form__label" for="foto-clear_id">убрать фотографию</label>
+			<input type="checkbox" name="foto-clear" id="foto-clear_id">
+		</div>
+			<label class="form__label text_bold" for="id_foto">загрузить фотографию</label>
+			<input type="file" name="foto" accept="image/*" id="id_foto">
+		<input class="form__submit" type="submit" value="Сохранить изменения">
+	</form>
+    <a class="link" href="{% url 'account:password_change' %}">сменить пароль</a>
+{% endblock content %}
