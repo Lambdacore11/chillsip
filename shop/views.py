@@ -4,6 +4,7 @@ from .forms import *
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.db.models import F
+from django.core.paginator import Paginator
 
 
 def product_list_view(request,category_slug=None):
@@ -15,13 +16,21 @@ def product_list_view(request,category_slug=None):
     if category_slug:
         category = get_object_or_404(Category,slug = category_slug)
         products = products.filter(category=category)
-        
+    
+    paginator = Paginator(products,8)
+    page_number = request.GET.get('page',1)
+    page_obj = paginator.get_page(page_number)
+
     context = {
         'category':category,
         'categories':categories,
-        'products':products,
+        'page_obj':page_obj,
         'site_section':'product_list',
     }
+
+    if request.headers.get('HX-Request'):
+        return render(request,'shop/product_partial.html',context)
+    
     return render(request,'shop/product_list.html',context)
 
 
@@ -229,6 +238,8 @@ def order_recieved_view(request,id):
 def about_view(request):
     return render(request,'shop/about.html',{'site_section':'about'})
 
+
+@login_required
 @require_POST
 def review_delete_view(request,id):
     feedback = get_object_or_404(UsersProducts,id=id,user=request.user)
