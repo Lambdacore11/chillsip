@@ -164,7 +164,7 @@ def order_create_view(request):
 
 @login_required
 def order_list_view(request):
-    orders = Order.objects.filter(user=request.user, is_delivered = True)
+    orders = Order.objects.filter(user=request.user, is_delivered = False)
 
     context = {
         'orders':orders,
