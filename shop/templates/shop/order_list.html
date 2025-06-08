@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block title %}Заказы{% endblock title %}
 
 {% block content %}
@@ -29,7 +31,7 @@
                     <td class="td">
                         {% for product in order.products.all %}
                             <a href="{{ product.product.get_absolute_url }}">
-                                <img class="order__image" src="{{ product.product.image.url }}">
+                                <img class="order__image" src="{% if product.product.image %} {{ product.product.image.url }} {% else %}{% static 'images/product_no_image.jpg' %} {% endif %}">
                             </a>
                         {% endfor %}
                     </td>

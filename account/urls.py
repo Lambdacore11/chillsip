@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from django.urls import reverse_lazy
 
 app_name = 'account'
 
@@ -18,7 +19,7 @@ urlpatterns = [
     path('password-change/done/',UserPasswordChangeDoneView.as_view(),name='password_change_done'),
 
     path('password-reset/',UserPasswordResetView.as_view(),name='password_reset'),
-    path('password-reset/done/',UserpasswordResetDoneView.as_view(),name='password_reset_done'),
+    path('password-reset/done/',UserPasswordResetDoneView.as_view(),name='password_reset_done'),
     path('reset/<uidb64>/<token>/',UserPasswordResetConfirmView.as_view(),name='password_reset_confirm'),
     path('reset/done/',UserPasswordResetCompleteView.as_view(),name='password_reset_complete'),
 ]

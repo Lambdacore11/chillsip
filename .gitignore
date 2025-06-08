@@ -51,3 +51,14 @@ shop/migrations/__pycache__/0007_order_is_delivered.cpython-313.pyc
 shop/migrations/__pycache__/0008_alter_usersproducts_rating.cpython-313.pyc
 shop/migrations/__pycache__/0009_alter_usersproducts_rating.cpython-313.pyc
 shop/migrations/__pycache__/0010_alter_product_image.cpython-313.pyc
+account/__pycache__/authentication.cpython-313.pyc
+account/__pycache__/tests.cpython-313.pyc
+account/migrations/__pycache__/0006_alter_user_account_alter_user_foto.cpython-313.pyc
+account/migrations/__pycache__/0007_alter_user_foto.cpython-313.pyc
+shop/__pycache__/tests.cpython-313.pyc
+.gitignore
+shop/migrations/__pycache__/0011_alter_order_apartment_alter_product_image_and_more.cpython-313.pyc
+.gitignore
+shop/migrations/__pycache__/0012_alter_product_image.cpython-313.pyc
+shop/migrations/__pycache__/0013_alter_usersproducts_unique_together.cpython-313.pyc
+shop/migrations/__pycache__/0014_alter_category_slug_alter_product_slug.cpython-313.pyc

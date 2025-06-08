@@ -25,7 +25,7 @@
                     <tr class="tr">
                         <td class="td">
                                 <a href="{{item.product.get_absolute_url}}">
-                                    <img class="table__image" src="{{item.product.image.url}}"> 
+                                    <img class="table__image" src="{% if item.product.image %} {{ item.product.image.url }} {% else %}{% static 'images/product_no_image.jpg' %} {% endif %}"> 
                                 </a>
                         </td>
                         <td class="td">{{ item.product }}</td>
@@ -78,6 +78,7 @@
         </script>
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script src="{% static 'js/shop/cart.js' %}"></script>
+
    {% endif %}
 
 {% endblock content %}

@@ -1,9 +1,8 @@
-from django.shortcuts import render,redirect,get_object_or_404,get_list_or_404
+from django.shortcuts import render,redirect,get_object_or_404
 from .models import *
 from .forms import *
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from decimal import Decimal
 from django.db.models import F
 
 
@@ -32,10 +31,7 @@ def product_detail_view(request,slug):
     is_product_in_cart = False
 
     if request.user.is_authenticated:
-        cart = request.user.cart.all()
-        for pr in cart:
-            if pr.product == product:
-                is_product_in_cart = True
+        is_product_in_cart = request.user.cart.filter(product=product).exists()
 
     context = {
       'product':product,
@@ -48,7 +44,7 @@ def product_detail_view(request,slug):
 
 @login_required
 def cart_view(request):
-    cart = ProductInCart.objects.filter(user=request.user)
+    cart = ProductInCart.objects.filter(user=request.user).select_related('product')
     total = 0
 
     for item in cart:
@@ -66,10 +62,23 @@ def cart_view(request):
 @login_required
 def cart_add_product_view(request,id):
     product = get_object_or_404(Product,id=id)
-    ProductInCart.objects.create(product=product,user=request.user,price=product.price)
+    if product.count == 0:
+        return redirect(product.get_absolute_url())
+    
+    cart_item, created = ProductInCart.objects.get_or_create(
+        user = request.user,
+        product = product,
+        defaults={'price': product.price, 'count': 1}
+    )
+    if not created:
+        cart_item.count = F('count') + 1
+        cart_item.save()
+        cart_item.refresh_from_db()
+   
     product.count = F('count') - 1
     product.save()
-    return redirect(product.get_absolute_url())
+    product.refresh_from_db()
+    return redirect('shop:cart')
 
 
 @login_required
@@ -78,6 +87,7 @@ def cart_delete_product_view(request,id):
     product = get_object_or_404(Product,id = product_in_cart.product_id)
     product.count = F('count') + product_in_cart.count
     product.save()
+    product.refresh_from_db()
     product_in_cart.delete()
     return redirect('shop:cart')
 
@@ -94,7 +104,9 @@ def cart_increment_view(request,id):
     product_in_cart.count = F('count') + 1
     product.count = F('count') - 1 
     product.save()
+    product.refresh_from_db()
     product_in_cart.save()
+    product_in_cart.refresh_from_db()
     return redirect('shop:cart')
 
 
@@ -110,7 +122,9 @@ def cart_decrement_view(request,id):
     product_in_cart.count = F('count') - 1
     product.count = F('count') + 1 
     product.save()
+    product.refresh_from_db()
     product_in_cart.save()
+    product_in_cart.refresh_from_db()
     return redirect('shop:cart')
 
 @login_required
@@ -123,8 +137,8 @@ def order_create_view(request):
 
         cd = form.cleaned_data
         user = request.user
-        cart = get_list_or_404(user.cart)
-        total = Decimal(request.POST['total'].replace(',','.'))
+        cart = ProductInCart.objects.filter(user=request.user).select_related('product')
+        total = sum(item.get_cost() for item in user.cart.all())
 
         if cart:
 
@@ -155,6 +169,7 @@ def order_create_view(request):
                 ProductInCart.objects.filter(user = user).delete()
                 user.account = F('account') - total
                 user.save()
+                user.refresh_from_db()
                 return render(request,'shop/order_done.html',{'order_id':new_order.id})
             
           
@@ -178,11 +193,15 @@ def order_list_view(request):
 def order_recieved_view(request,id):
 
     form = UsersProductsForm()
-
+   
     if request.method == 'POST':
         form = UsersProductsForm(request.POST)
         if form.is_valid():
             product = get_object_or_404(Product,id = request.POST['product_id'] )
+            order = get_object_or_404(Order, id=id, user=request.user)
+            if not order.products.filter(product=product).exists():
+                return redirect('shop:order_list')
+
             cd = form.cleaned_data
             UsersProducts.objects.create(
                 user = request.user,
@@ -190,7 +209,7 @@ def order_recieved_view(request,id):
                 rating = cd['rating'],
                 review = cd['review'],
             )
-            ProductInOrder.objects.filter(product_id = product.id).delete()
+            ProductInOrder.objects.filter(product_id = product.id, order_id=id).delete()
             form = UsersProductsForm()
 
     order = get_object_or_404(Order,id=id)
@@ -212,11 +231,10 @@ def about_view(request):
 
 @require_POST
 def review_delete_view(request,id):
-    feedback = get_object_or_404(UsersProducts,id=id)
+    feedback = get_object_or_404(UsersProducts,id=id,user=request.user)
     product = get_object_or_404(Product,id = feedback.product_id)
     feedback.review = None
     feedback.save()
     return redirect(product.get_absolute_url())
-
 
 

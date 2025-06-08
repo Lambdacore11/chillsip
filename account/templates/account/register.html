@@ -10,7 +10,7 @@
 
     <div class="formFeedback">
         {% if form.errors %}
-            {% for field, error in user_form.errors.items %}
+            {% for field, error in form.errors.items %}
                 <div class="text text_error">{{ error|striptags }}</div>
             {% endfor %}
         {% else %}

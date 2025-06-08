@@ -1,5 +1,5 @@
 from django.shortcuts import redirect,render,get_object_or_404
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from .forms import *
 from django.contrib.auth import views
 from django.views.generic import UpdateView
@@ -37,28 +37,31 @@ class UserLogoutView(views.LogoutView):
 class UserPasswordChangeView(views.PasswordChangeView):
     form_class = UserPasswordChangeForm
     template_name = 'account/password_change.html'
-    success_url = reverse_lazy('account:password_change_done')
+    def get_success_url(self):
+        return reverse('account:password_change_done')
+    
 
 class UserPasswordChangeDoneView(views.PasswordChangeDoneView):
-
     template_name = 'account/password_change_done.html'
 
 
 class UserPasswordResetView(views.PasswordResetView):
-
     template_name = 'account/password_reset.html'
     email_template_name = 'account/password_reset_email.html'
-    success_url = reverse_lazy('account:password_reset_done')
+    def get_success_url(self):
+        return reverse('account:password_reset_done')
 
-class UserpasswordResetDoneView(views.PasswordResetDoneView):
+class UserPasswordResetDoneView(views.PasswordResetDoneView):
     template_name = 'account/password_reset_done.html'
 
 class UserPasswordResetConfirmView(views.PasswordResetConfirmView):
     template_name = 'account/password_reset_confirm.html'
-    success_url = reverse_lazy('account:password_reset_complete')
-
+    def get_success_url(self):
+        return reverse('account:password_reset_complete')
+  
 class UserPasswordResetCompleteView(views.PasswordResetCompleteView):
     template_name = 'account/password_reset_complete.html'
+    
 
 
 class UserUpdateView(UpdateView):

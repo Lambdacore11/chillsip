@@ -1,7 +1,6 @@
 from django.db import models
 from uuid import uuid4
 from django.contrib.auth.models import AbstractUser
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import Group as DefaultGroup
 from django.core.validators import MinValueValidator,MaxValueValidator
@@ -46,13 +45,13 @@ class User(AbstractUser):
         decimal_places=2,
         validators=[MinValueValidator(0)],
         default=0,
-        verbose_name='Балланс',
+        verbose_name='Баланс',
     )
     foto= models.ImageField(
         upload_to='foto/%Y/%m/%d',
         blank=True,
         null=True,
-        verbose_name='Фотография'
+        verbose_name='Фотография',
     )
     age = models.IntegerField(
         validators=[MinValueValidator(1),MaxValueValidator(150)],

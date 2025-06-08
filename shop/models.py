@@ -1,3 +1,4 @@
+from decimal import ROUND_HALF_UP, Decimal
 from uuid import uuid4
 from autoslug import AutoSlugField
 from django.conf import settings
@@ -49,6 +50,7 @@ class Category(models.Model):
         populate_from='name',
         max_length=200,
         unique=True,
+        always_update=True,
         verbose_name='Slug',
     )
     class Meta:
@@ -87,13 +89,14 @@ class Product(models.Model):
         populate_from='name',
         max_length=200,
         unique=True,
+        always_update=True,
         verbose_name='Slug',
     )
     image = models.ImageField(
         upload_to='products/%Y/%m/%d',
         blank=True,
         null=True,
-        verbose_name='Изображение'
+        verbose_name='Изображение',
     )
     description = models.TextField(
         blank=True,
@@ -134,13 +137,9 @@ class Product(models.Model):
         return reverse('shop:product_detail',args=[self.slug])
     
     def get_average_rating_url(self):
-        total_rating = self.feedback.all().values_list('rating',flat=True)
-        if not total_rating:
-            return 'images/rating/0.0.png'
-        
-        average = sum(total_rating) / len(total_rating)
-        rounded_average = round(average * 2) / 2
-        return f'images/rating/{rounded_average}.png'
+        average = self.feedback.aggregate(avg=models.Avg('rating'))['avg'] or 0
+        rounded = (Decimal(average) * 2).quantize(Decimal('1'), rounding=ROUND_HALF_UP) / 2
+        return f'images/rating/{rounded}.png'
     
     
 class ProductInCart(models.Model):
@@ -222,6 +221,7 @@ class Order(models.Model):
         verbose_name='Дом',
     )
     apartment = models.CharField(
+        max_length=100,
         blank = True,
         null = True,
         verbose_name='Квартира',
@@ -313,14 +313,14 @@ class UsersProducts(models.Model):
         verbose_name='Товар',
     )
     rating = models.IntegerField(
-        validators=[MinValueValidator(1),MaxValueValidator(5)],
+        validators=[MinValueValidator(0),MaxValueValidator(5)],
         default= 0,
         verbose_name= 'Рейтинг',
     )
     review = models.TextField(
         blank=True,
         null=True,
-        verbose_name= 'обзор',
+        verbose_name= 'Обзор',
     )
     created = models.DateTimeField(
         auto_now_add=True,
@@ -331,5 +331,8 @@ class UsersProducts(models.Model):
         ordering = ['-created']
         verbose_name = 'Обратная связь'
         verbose_name_plural = 'Обратная связь'
+
+
+
 
 
