@@ -4,6 +4,7 @@ from .forms import *
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from decimal import Decimal
+from django.db.models import F
 
 
 def product_list_view(request,category_slug=None):
@@ -13,7 +14,7 @@ def product_list_view(request,category_slug=None):
     products = Product.objects.all()
 
     if category_slug:
-        category = get_object_or_404(Category,slug=category_slug)
+        category = get_object_or_404(Category,slug = category_slug)
         products = products.filter(category=category)
         
     context = {
@@ -66,7 +67,7 @@ def cart_view(request):
 def cart_add_product_view(request,id):
     product = get_object_or_404(Product,id=id)
     ProductInCart.objects.create(product=product,user=request.user,price=product.price)
-    product.count -= 1
+    product.count = F('count') - 1
     product.save()
     return redirect(product.get_absolute_url())
 
@@ -75,7 +76,8 @@ def cart_add_product_view(request,id):
 def cart_delete_product_view(request,id):
     product_in_cart = get_object_or_404(ProductInCart,id=id)
     product = get_object_or_404(Product,id = product_in_cart.product_id)
-    product.count += product_in_cart.count
+    product.count = F('count') + product_in_cart.count
+    product.save()
     product_in_cart.delete()
     return redirect('shop:cart')
 
@@ -89,8 +91,8 @@ def cart_increment_view(request,id):
     if product.count == 0:
         return redirect('shop:cart')
     
-    product_in_cart.count += 1
-    product.count -= 1 
+    product_in_cart.count = F('count') + 1
+    product.count = F('count') - 1 
     product.save()
     product_in_cart.save()
     return redirect('shop:cart')
@@ -105,8 +107,8 @@ def cart_decrement_view(request,id):
     if product_in_cart.count == 1:
         return redirect('shop:cart')
     
-    product_in_cart.count -= 1
-    product.count += 1 
+    product_in_cart.count = F('count') - 1
+    product.count = F('count') + 1 
     product.save()
     product_in_cart.save()
     return redirect('shop:cart')
@@ -151,7 +153,7 @@ def order_create_view(request):
                     )
 
                 ProductInCart.objects.filter(user = user).delete()
-                user.account -= total
+                user.account = F('account') - total
                 user.save()
                 return render(request,'shop/order_done.html',{'order_id':new_order.id})
             
@@ -162,7 +164,7 @@ def order_create_view(request):
 
 @login_required
 def order_list_view(request):
-    orders = Order.objects.filter(user=request.user, is_delivered = False)
+    orders = Order.objects.filter(user=request.user, is_delivered = True)
 
     context = {
         'orders':orders,

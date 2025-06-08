@@ -5,6 +5,7 @@ from django.contrib.auth import views
 from django.views.generic import UpdateView
 from decimal import Decimal
 from django.contrib.auth import get_user_model
+from django.db.models import F
 
 
 def user_register_view(request):
@@ -74,7 +75,7 @@ def money_update_view(request,slug):
 
     if request.method == 'POST':
         user = get_object_or_404(get_user_model(),slug=slug)
-        user.account += Decimal(request.POST['account'])
+        user.account = F('account') + Decimal(request.POST['account'])
         user.save()
         return redirect('account:money_done')
     
