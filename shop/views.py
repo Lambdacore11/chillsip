@@ -53,7 +53,7 @@ def product_detail_view(request,slug):
 
 @login_required
 def cart_view(request):
-    cart = ProductInCart.objects.filter(user=request.user).select_related('product')
+    cart = Cart.objects.filter(user=request.user).select_related('product')
     total = 0
 
     for item in cart:
@@ -74,7 +74,7 @@ def cart_add_product_view(request,id):
     if product.count == 0:
         return redirect(product.get_absolute_url())
     
-    cart_item, created = ProductInCart.objects.get_or_create(
+    cart_item, created = Cart.objects.get_or_create(
         user = request.user,
         product = product,
         defaults={'price': product.price, 'count': 1}
@@ -92,7 +92,7 @@ def cart_add_product_view(request,id):
 
 @login_required
 def cart_delete_product_view(request,id):
-    product_in_cart = get_object_or_404(ProductInCart,id=id)
+    product_in_cart = get_object_or_404(Cart,id=id)
     product = get_object_or_404(Product,id = product_in_cart.product_id)
     product.count = F('count') + product_in_cart.count
     product.save()
@@ -104,7 +104,7 @@ def cart_delete_product_view(request,id):
 @login_required
 def cart_increment_view(request,id):
 
-    product_in_cart = get_object_or_404(ProductInCart,id=id)
+    product_in_cart = get_object_or_404(Cart,id=id)
     product = get_object_or_404(Product,id = product_in_cart.product_id)
 
     if product.count == 0:
@@ -122,7 +122,7 @@ def cart_increment_view(request,id):
 @login_required
 def cart_decrement_view(request,id):
 
-    product_in_cart = get_object_or_404(ProductInCart,id=id)
+    product_in_cart = get_object_or_404(Cart,id=id)
     product = get_object_or_404(Product,id = product_in_cart.product_id)
 
     if product_in_cart.count == 1:
@@ -146,7 +146,7 @@ def order_create_view(request):
 
         cd = form.cleaned_data
         user = request.user
-        cart = ProductInCart.objects.filter(user=request.user).select_related('product')
+        cart = Cart.objects.filter(user=request.user).select_related('product')
         total = sum(item.get_cost() for item in user.cart.all())
 
         if cart:
@@ -175,7 +175,7 @@ def order_create_view(request):
                         count = item.count,
                     )
 
-                ProductInCart.objects.filter(user = user).delete()
+                Cart.objects.filter(user = user).delete()
                 user.account = F('account') - total
                 user.save()
                 user.refresh_from_db()
@@ -212,7 +212,7 @@ def order_recieved_view(request,id):
                 return redirect('shop:order_list')
 
             cd = form.cleaned_data
-            UsersProducts.objects.create(
+            Feedback.objects.create(
                 user = request.user,
                 product = product,
                 rating = cd['rating'],
@@ -242,7 +242,7 @@ def about_view(request):
 @login_required
 @require_POST
 def review_delete_view(request,id):
-    feedback = get_object_or_404(UsersProducts,id=id,user=request.user)
+    feedback = get_object_or_404(Feedback,id=id,user=request.user)
     product = get_object_or_404(Product,id = feedback.product_id)
     feedback.review = None
     feedback.save()

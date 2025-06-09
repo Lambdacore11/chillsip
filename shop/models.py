@@ -142,7 +142,7 @@ class Product(models.Model):
         return f'images/rating/{rounded}.png'
     
     
-class ProductInCart(models.Model):
+class Cart(models.Model):
 
     id = models.UUIDField(
         primary_key=True,
@@ -299,7 +299,7 @@ class ProductInOrder(models.Model):
         return str(self.product)
 
 
-class UsersProducts(models.Model):
+class Feedback(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='feedback',

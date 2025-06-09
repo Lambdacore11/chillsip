@@ -21,7 +21,7 @@ class ProductAdmin(admin.ModelAdmin):
     ]
     list_filter = ['category']
 
-@admin.register(ProductInCart)
+@admin.register(Cart)
 class ProductInCartAdmin(admin.ModelAdmin):
     list_display = [
         'user',
@@ -58,7 +58,7 @@ class ProductInOrderAdmin(admin.ModelAdmin):
     list_filter = ['product','order','created']
 
 
-@admin.register(UsersProducts)
+@admin.register(Feedback)
 class UsersProductsAdmin(admin.ModelAdmin):
     list_display = [
         'user',

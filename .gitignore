@@ -62,3 +62,7 @@ shop/migrations/__pycache__/0011_alter_order_apartment_alter_product_image_and_m
 shop/migrations/__pycache__/0012_alter_product_image.cpython-313.pyc
 shop/migrations/__pycache__/0013_alter_usersproducts_unique_together.cpython-313.pyc
 shop/migrations/__pycache__/0014_alter_category_slug_alter_product_slug.cpython-313.pyc
+rest/__pycache__/tests.cpython-313.pyc
+.gitignore
+blog/__pycache__/tests.cpython-313.pyc
+shop/migrations/__pycache__/0015_rename_productincart_cart_and_more.cpython-313.pyc

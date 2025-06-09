@@ -1,10 +1,10 @@
 from django.shortcuts import redirect,render,get_object_or_404
 from django.urls import reverse
 from .forms import *
-from django.contrib.auth import views
+from django.contrib.auth import views,get_user_model
+from django.contrib.auth.decorators import login_required
 from django.views.generic import UpdateView
 from decimal import Decimal
-from django.contrib.auth import get_user_model
 from django.db.models import F
 
 
@@ -63,7 +63,6 @@ class UserPasswordResetCompleteView(views.PasswordResetCompleteView):
     template_name = 'account/password_reset_complete.html'
     
 
-
 class UserUpdateView(UpdateView):
     model = get_user_model()
     form_class = UserUpdateForm
@@ -71,7 +70,7 @@ class UserUpdateView(UpdateView):
     def get_success_url(self):
         return reverse('account:profile', kwargs={'slug': self.request.user.slug})
 
-
+@login_required
 def money_update_view(request,slug):
 
     form = MoneyUpdateForm()
@@ -85,6 +84,6 @@ def money_update_view(request,slug):
     else:
         return render(request,'account/money.html',{'form':form})
 
-
+@login_required
 def money_done(request):
     return render(request,'account/money_done.html')
