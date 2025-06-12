@@ -2,13 +2,37 @@ from django.db import models
 from uuid import uuid4
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import Group as DefaultGroup
+from django.contrib.auth.models import Group as DefaultGroup,BaseUserManager
 from django.core.validators import MinValueValidator,MaxValueValidator
 from autoslug import AutoSlugField 
 
 
-class User(AbstractUser):
+class UserManager(BaseUserManager):
+    def create_user(self, username, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Email обязателен")
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
+    def create_superuser(self, username, email, password=None, **extra_fields):
+        if not password:
+            raise ValueError("Суперпользователь должен иметь пароль")
+        
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Суперпользователь должен иметь is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Суперпользователь должен иметь is_superuser=True.")
+
+        return self.create_user(username, email, password, **extra_fields)
+
+
+class User(AbstractUser):
     GENDER_CHOICES = (
         ('m','Мужской'),
         ('f','Женский'),
@@ -66,13 +90,36 @@ class User(AbstractUser):
         null=True,
         verbose_name='Пол'
     )
-    
+    objects = UserManager()
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
+
     def __str__(self):
         return f'{self.username} {self.email}'  
 
+class SuspiciousUser(models.Model):
+    id = models.UUIDField(primary_key=True,
+        default=uuid4, 
+        editable=False,
+        verbose_name='UUID',
+    )
+    user = models.ForeignKey(
+        User,
+        related_name='suspicions',
+        on_delete= models.CASCADE,
+        verbose_name= 'Пользователи'
+    )
+    reason = models.TextField(verbose_name='Причина')
+    created = models.DateTimeField(auto_now_add=True,verbose_name='Создан')
+
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Подозрительный пользователь'
+        verbose_name_plural = 'Подозрительные пользователи'
+
 
 class Group(DefaultGroup):
-
     class Meta:
         verbose_name = _('group')
         verbose_name_plural = _('groups')

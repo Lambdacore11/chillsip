@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm,PasswordChangeForm
@@ -76,21 +77,23 @@ class UserUpdateForm(forms.ModelForm):
 
 
 class MoneyUpdateForm(forms.ModelForm):
-    class Meta:
-        model = get_user_model()
-        fields = [
-            'account'
-        ]
-        MONEY_CHOICES = (
+
+    MONEY_CHOICES = (
             (100,'100₽'),
             (500,'500₽'),
             (1000,'1000₽'),
             (5000,'5000₽'),
             (10000,'10 000₽')
         )
-        labels = {
-            'account':'Внести',
-        }
-        widgets = {
-            'account':forms.Select(choices = MONEY_CHOICES )
-        }
+    
+    account = forms.ChoiceField(choices=MONEY_CHOICES, label='Внести')
+
+    class Meta:
+        model = get_user_model()
+        fields = ['account']
+    
+    def clean_account(self):
+        value = self.cleaned_data['account']
+        return Decimal(value)
+        
+    

@@ -23,8 +23,19 @@ class UserAdmin(admin.ModelAdmin):
         'is_active',
         'is_staff',
         'gender',
+        'date_joined',
     ]
-  
+
+@admin.register(SuspiciousUser)
+class SuspiciousUserAdmin(admin.ModelAdmin):
+
+    list_display = [
+        'user',
+        'reason',
+    ]
+    list_filter = [
+        'created'
+    ]
 
 
 admin.site.unregister(DefaultGroup)

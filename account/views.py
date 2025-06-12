@@ -1,89 +1,111 @@
-from django.shortcuts import redirect,render,get_object_or_404
-from django.urls import reverse
-from .forms import *
+from django.shortcuts import redirect
+from django.urls import reverse,reverse_lazy
 from django.contrib.auth import views,get_user_model
-from django.contrib.auth.decorators import login_required
 from django.views.generic import UpdateView
-from decimal import Decimal
 from django.db.models import F
+from django.contrib.auth.mixins import LoginRequiredMixin,AccessMixin
+from django.views.generic import TemplateView,FormView
+from .forms import *
+from .models import SuspiciousUser
 
 
-def user_register_view(request):
+class UserRegisterView(FormView):
+    model = get_user_model()
+    form_class = UserRegisterForm
+    template_name = 'account/register.html'
+    success_url = reverse_lazy('account:register_done')
 
-    form = UserRegisterForm()
-
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        
-        if form.is_valid():
-            cd = form.cleaned_data
-            new_user = form.save(commit=False)
-            new_user.set_password(cd['password'])
-            new_user.save()
-            return render(request,'account/register_done.html')
-    
-    
-    return render (request,'account/register.html',{'form':form})
-
+    def form_valid(self, form):
+        cd = form.cleaned_data
+        user = form.save(commit=False)
+        user.set_password(cd['password'])
+        user.save()
+        return super().form_valid(form)
 
 class UserLoginView(views.LoginView):
     form_class = UserLoginForm
     template_name = 'account/login.html'
-
-class UserLogoutView(views.LogoutView):
+    
+class UserLogoutView(LoginRequiredMixin,views.LogoutView):
     template_name = 'account/logout.html'
 
 
-class UserPasswordChangeView(views.PasswordChangeView):
+class UserPasswordChangeView(LoginRequiredMixin,views.PasswordChangeView):
     form_class = UserPasswordChangeForm
     template_name = 'account/password_change.html'
-    def get_success_url(self):
-        return reverse('account:password_change_done')
+    success_url = reverse_lazy('account:password_change_done')
     
-
-class UserPasswordChangeDoneView(views.PasswordChangeDoneView):
+class UserPasswordChangeDoneView(LoginRequiredMixin,views.PasswordChangeDoneView):
     template_name = 'account/password_change_done.html'
 
 
 class UserPasswordResetView(views.PasswordResetView):
     template_name = 'account/password_reset.html'
     email_template_name = 'account/password_reset_email.html'
-    def get_success_url(self):
-        return reverse('account:password_reset_done')
-
+    success_url = reverse_lazy('account:password_reset_done')
+   
 class UserPasswordResetDoneView(views.PasswordResetDoneView):
     template_name = 'account/password_reset_done.html'
 
 class UserPasswordResetConfirmView(views.PasswordResetConfirmView):
     template_name = 'account/password_reset_confirm.html'
-    def get_success_url(self):
-        return reverse('account:password_reset_complete')
-  
+    success_url = reverse_lazy('account:password_reset_complete')
+   
 class UserPasswordResetCompleteView(views.PasswordResetCompleteView):
     template_name = 'account/password_reset_complete.html'
     
 
-class UserUpdateView(UpdateView):
+class UserUpdateView(AccessMixin,UpdateView):
     model = get_user_model()
     form_class = UserUpdateForm
     template_name = 'account/profile.html'
+    
     def get_success_url(self):
         return reverse('account:profile', kwargs={'slug': self.request.user.slug})
-
-@login_required
-def money_update_view(request,slug):
-
-    form = MoneyUpdateForm()
-
-    if request.method == 'POST':
-        user = get_object_or_404(get_user_model(),slug=slug)
-        user.account = F('account') + Decimal(request.POST['account'])
-        user.save()
-        return redirect('account:money_done')
     
-    else:
-        return render(request,'account/money.html',{'form':form})
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
+        expected_slug = kwargs.get('slug')
 
-@login_required
-def money_done(request):
-    return render(request,'account/money_done.html')
+        if request.user.slug != expected_slug:
+            SuspiciousUser.objects.create(
+                user=request.user,
+                reason = f"Пытался получить доступ к профилю пользователя {expected_slug}"
+            )
+            return redirect(self.get_success_url())
+        
+        return super().dispatch(request, *args, **kwargs)
+
+
+class MoneyUpdateView(AccessMixin,FormView):
+    model = get_user_model()
+    form_class = MoneyUpdateForm
+    template_name = 'account/money_update.html'
+    success_url = reverse_lazy('account:money_done')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
+        expected_slug = kwargs.get('slug')
+        
+        if request.user.slug != expected_slug:
+            SuspiciousUser.objects.create(
+                user=request.user,
+                reason = f"Пытался получить доступ к счету пользователя {expected_slug}"
+            )
+            return redirect('account:profile',slug=request.user.slug)
+        
+        return super().dispatch(request, *args, **kwargs)
+        
+    def form_valid(self, form):
+        cd = form.cleaned_data
+        self.request.user.account = F('account') + cd['account']
+        self.request.user.save(update_fields=['account'])
+        self.request.user.refresh_from_db()
+        return super().form_valid(form)  
+
+class MoneyDoneView(LoginRequiredMixin, TemplateView):
+    template_name = 'account/money_done.html'

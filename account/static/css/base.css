@@ -314,7 +314,6 @@ select,option {
     height: 1rem;
     width: 5rem;
 }
-
 .product__reviews {
     margin-top: 10rem;
     display: flex;
@@ -322,12 +321,14 @@ select,option {
     gap: 2rem;
     width: 100%;
 }
+
 .table {
     border-collapse: collapse;
 }
 .th, .td {
-    text-align: center;
     padding: 1rem;
+    text-align: center;
+    vertical-align: center;
 }
 .table__image {
     height: 6vh;
@@ -341,6 +342,11 @@ select,option {
 .td_total::first-letter {
     text-transform: uppercase;
 }
+.table__icon {
+    width: 1.5rem;
+    aspect-ratio: 1/1;
+}
+
 .order__image {
     width: 3rem;
 }

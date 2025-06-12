@@ -66,3 +66,4 @@ rest/__pycache__/tests.cpython-313.pyc
 .gitignore
 blog/__pycache__/tests.cpython-313.pyc
 shop/migrations/__pycache__/0015_rename_productincart_cart_and_more.cpython-313.pyc
+account/migrations/__pycache__/0008_alter_user_managers_suspicioususer.cpython-313.pyc
