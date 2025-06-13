@@ -36,7 +36,7 @@
                         {% endfor %}
                     </td>
                     <td class="td">{{ order.price }}₽</td>
-                    <td><a class="link" href="{% url 'shop:order_recieved' order.pk %}">получить заказ</a></td>
+                    <td><a class="link" href="{% url 'shop:order_received' order.id %}">получить заказ</a></td>
                 </tr>
 
             {% endfor %}

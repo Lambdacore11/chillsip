@@ -4,6 +4,6 @@
 {% block content %}
     <div class="text">
         на вашем счете недостаточно средств вы можете
-        <a class="link" href="{% url 'account:money' user.slug %}"> пополнить баланс здесь</a>
+        <a class="link" href="{% url 'account:money_update' user.slug %}"> пополнить баланс здесь</a>
     </div>
 {% endblock content %}

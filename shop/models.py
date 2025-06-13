@@ -209,9 +209,6 @@ class Order(models.Model):
         related_name='orders',
         on_delete=models.CASCADE,
         verbose_name='Улица',
-        blank = True,
-        null = True,
-
     )
     is_private = models.BooleanField(
         verbose_name= 'Частный дом'

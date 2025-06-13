@@ -1,12 +1,15 @@
+from unittest import mock
+from unittest.mock import patch
 from uuid import uuid4
 from django.forms import ValidationError
 from django.test import Client, TestCase
 from django.contrib.auth import get_user_model
-from shop.models import Street, Category, Product, ProductInCart, Order, ProductInOrder, UsersProducts
+from shop.forms import OrderForm
+from shop.models import Street, Category, Product, Cart, Order, ProductInOrder, Feedback
 from django.urls import reverse
 from decimal import Decimal
 from django.db import IntegrityError
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils.http import urlencode
 
 
 User = get_user_model()
@@ -52,7 +55,7 @@ class CategoryModelTest(TestCase):
 
 class ProductModelTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.user = User.objects.create_user(username='testuser', password='testpass',email='testemail')
         self.category = Category.objects.create(name='Ноутбуки')
         self.product = Product.objects.create(
             category=self.category,
@@ -81,21 +84,21 @@ class ProductModelTest(TestCase):
         self.assertEqual(url, 'images/rating/0.png')
 
     def test_get_average_rating_url_half_star(self):
-        UsersProducts.objects.create(
+        Feedback.objects.create(
             user = self.user,
             product=self.product,
             rating=3
         )
 
-        UsersProducts.objects.create(user =self.user, product=self.product, rating=4)
+        Feedback.objects.create(user =self.user, product=self.product, rating=4)
 
         url = self.product.get_average_rating_url()
         self.assertEqual(url, 'images/rating/3.5.png')
 
 
-class ProductInCartModelTest(TestCase):
+class CartModelTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.user = User.objects.create_user(username='testuser', password='testpass',email='testemail')
         self.category = Category.objects.create(name='Смартфоны')
         self.product = Product.objects.create(
             category=self.category,
@@ -103,7 +106,7 @@ class ProductInCartModelTest(TestCase):
             price=Decimal('999.99'),
             count=5,
         )
-        self.cart_item = ProductInCart.objects.create(
+        self.cart_item = Cart.objects.create(
             user=self.user,
             product=self.product,
             price=self.product.price,
@@ -126,7 +129,7 @@ class ProductInCartModelTest(TestCase):
 
 class OrderModelTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(username='testuser', password='pass',email='testemail')
         self.street = Street.objects.create(name='Ленина')
 
     def test_order_creation_with_apartment(self):
@@ -186,7 +189,7 @@ class OrderModelTest(TestCase):
 
 class ProductInOrderModelTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(username='testuser', password='pass',email='testemail')
         self.category = Category.objects.create(name='Молочные продукты')
         self.product = Product.objects.create(
             category=self.category,
@@ -226,9 +229,9 @@ class ProductInOrderModelTest(TestCase):
         self.assertEqual(str(pio), str(self.product))
 
 
-class UsersProductsModelTest(TestCase):
+class FeedbackModelTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='feedback_user', password='testpass')
+        self.user = User.objects.create_user(username='feedback_user', password='testpass',email='testemail')
         self.category = Category.objects.create(name='Овощи')
         self.product = Product.objects.create(
             category=self.category,
@@ -238,7 +241,7 @@ class UsersProductsModelTest(TestCase):
         )
 
     def test_create_feedback_with_rating_and_review(self):
-        feedback = UsersProducts.objects.create(
+        feedback = Feedback.objects.create(
             user=self.user,
             product=self.product,
             rating=4,
@@ -250,7 +253,7 @@ class UsersProductsModelTest(TestCase):
         self.assertEqual(feedback.product, self.product)
 
     def test_rating_validation(self):
-        feedback = UsersProducts(
+        feedback = Feedback(
             user=self.user,
             product=self.product,
             rating=6, 
@@ -260,7 +263,7 @@ class UsersProductsModelTest(TestCase):
             feedback.full_clean()
 
     def test_rating_lower_bound_validation(self):
-        feedback = UsersProducts(
+        feedback = Feedback(
             user=self.user,
             product=self.product,
             rating=-1,
@@ -270,7 +273,7 @@ class UsersProductsModelTest(TestCase):
             feedback.full_clean()
 
     def test_create_feedback_without_review(self):
-        feedback = UsersProducts.objects.create(
+        feedback = Feedback.objects.create(
             user=self.user,
             product=self.product,
             rating=3,
@@ -280,559 +283,601 @@ class UsersProductsModelTest(TestCase):
         self.assertEqual(feedback.rating, 3)
 
 
-class ProductListViewTest(TestCase):
-    def setUp(self):
-        self.category1 = Category.objects.create(name='Фрукты')
-        self.category2 = Category.objects.create(name='Овощи')
+class AboutTemplateViewTests(TestCase):
+    def test_about_page_status_code(self):
+        response = self.client.get(reverse('shop:about'))
+        self.assertEqual(response.status_code, 200)
 
-        self.product1 = Product.objects.create(
-            category=self.category1,
-            name='Яблоко',
-            price=Decimal('10.00'),
-            count=5,
-        )
-        self.product2 = Product.objects.create(
-            category=self.category2,
-            name='Морковь',
-            price=Decimal('5.00'),
-            count=3,
-        )
+    def test_about_page_template_used(self):
+        response = self.client.get(reverse('shop:about'))
+        self.assertTemplateUsed(response, 'shop/about.html')
 
-    def test_all_products_list_view(self):
-        url = reverse('shop:product_list')
+    def test_about_page_context_data(self):
+        response = self.client.get(reverse('shop:about'))
+        self.assertIn('site_section', response.context)
+        self.assertEqual(response.context['site_section'], 'about')
+
+
+class ProductListViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.client = Client()
+        cls.category = Category.objects.create(name="Test Category")
+        for i in range(10):
+            Product.objects.create(
+                category=cls.category,
+                name=f"Product {i}",
+                price=10.0,
+                count=5
+            )
+
+    def test_product_list_status_code(self):
+        response = self.client.get(reverse('shop:product_list'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_product_list_template_used(self):
+        response = self.client.get(reverse('shop:product_list'))
+        self.assertTemplateUsed(response, 'shop/product_list.html')
+
+    def test_product_list_htmx_template(self):
+        response = self.client.get(
+            reverse('shop:product_list'),
+            HTTP_HX_REQUEST='true'
+        )
+        self.assertTemplateUsed(response, 'shop/product_partial.html')
+
+    def test_product_list_context_data(self):
+        response = self.client.get(reverse('shop:product_list'))
+        context = response.context
+        self.assertIn('products', context)
+        self.assertIn('categories', context)
+        self.assertEqual(context['category'], None)
+        self.assertEqual(context['site_section'], 'product_list')
+
+    def test_product_list_by_category(self):
+        url = reverse('shop:product_list_by_category', args=[self.category.slug])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shop/product_list.html')
-        self.assertIn(self.product1, response.context['products'])
-        self.assertIn(self.product2, response.context['products'])
+        self.assertEqual(
+            list(response.context['products']),
+            list(Product.objects.filter(category=self.category).order_by('-created')[:8])  
+        )
+        
+    def test_product_list_pagination(self):
+        response = self.client.get(reverse('shop:product_list'))
+        self.assertTrue(response.context['is_paginated'])
+        self.assertEqual(len(response.context['products']), 8)  
 
-    def test_category_filtered_product_list_view(self):
-        url = reverse('shop:product_list_by_category', args=[self.category1.slug])
-        response = self.client.get(url)
+        response = self.client.get(f"{reverse('shop:product_list')}?{urlencode({'page': 2})}")
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shop/product_list.html')
-        self.assertIn(self.product1, response.context['products'])
-        self.assertNotIn(self.product2, response.context['products'])
-        self.assertEqual(response.context['category'], self.category1)
+        self.assertEqual(len(response.context['products']), 2)  
 
 
-class ProductDetailViewTest(TestCase):
+class ProductDetailViewTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass123')
-        self.category = Category.objects.create(name='Напитки')
+        self.user = User.objects.create_user(username='testuser', password='testpass',email='testemail')
+        self.category = Category.objects.create(name='Test Category')
         self.product = Product.objects.create(
+            name='Test Product',
             category=self.category,
-            name='Сок',
-            price=Decimal('3.99'),
+            price=100,
             count=10,
         )
 
-    def test_product_detail_view_as_anonymous(self):
-        url = reverse('shop:product_detail', args=[self.product.slug])
+    def test_product_detail_anonymous(self):
+        url = self.product.get_absolute_url()
         response = self.client.get(url)
-
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shop/product_detail.html')
         self.assertEqual(response.context['product'], self.product)
+        self.assertIn('is_product_in_cart', response.context)
         self.assertFalse(response.context['is_product_in_cart'])
 
-    def test_product_detail_view_authenticated_without_cart_item(self):
-        self.client.login(username='testuser', password='testpass123')
-        url = reverse('shop:product_detail', args=[self.product.slug])
+    def test_product_detail_authenticated_not_in_cart(self):
+        self.client.login(username='testuser', password='testpass',email='testemail')
+        url = self.product.get_absolute_url()
         response = self.client.get(url)
-
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context['is_product_in_cart'])
 
-    def test_product_detail_view_authenticated_with_cart_item(self):
-        ProductInCart.objects.create(
-            user=self.user,
-            product=self.product,
-            price=self.product.price,
-            count=1
-        )
-        self.client.login(username='testuser', password='testpass123')
-        url = reverse('shop:product_detail', args=[self.product.slug])
+    def test_product_detail_authenticated_in_cart(self):
+        Cart.objects.create(user=self.user, product=self.product, price=100, count=1)
+        self.client.login(username='testuser', password='testpass',email='testemail')
+        url = self.product.get_absolute_url()
         response = self.client.get(url)
-
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context['is_product_in_cart'])
 
 
-class CartViewTest(TestCase):
+class CartListViewTests(TestCase):
+
     def setUp(self):
-        self.client = Client()
+        self.user = get_user_model().objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.category = Category.objects.create(name='Test Category')
+        self.product1 = Product.objects.create(
+            name='Test Product 1',
+            category=self.category,
+            price=10,
+            count=5
+        )
+        self.product2 = Product.objects.create(
+            name='Test Product 2',
+            category=self.category,
+            price=20,
+            count=3
+        )
+        Cart.objects.create(user=self.user, product=self.product1, price=self.product1.price, count=2)
+        Cart.objects.create(user=self.user, product=self.product2, price=self.product2.price, count=1)
+
+    def test_login_required(self):
+        response = self.client.get(reverse('shop:cart_list'))
+        self.assertRedirects(response, f'/account/login/?next={reverse("shop:cart_list")}')
+
+    def test_cart_list_view(self):
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get(reverse('shop:cart_list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'shop/cart_list.html')
+        self.assertIn('cart', response.context)
+        self.assertIn('form', response.context)
+        self.assertIn('total', response.context)
+        self.assertIn('site_section', response.context)
+        self.assertIsInstance(response.context['form'], OrderForm)
+
+        cart_items = list(response.context['cart'])
+        self.assertEqual(len(cart_items), 2)
+
+        total_expected = (
+            self.product1.price * 2 +
+            self.product2.price * 1
+        )
+        self.assertEqual(response.context['total'], total_expected)
+        self.assertEqual(response.context['site_section'], 'cart')
+
+
+class CartAddProductViewTests(TestCase):
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.category = Category.objects.create(name='Test Category')
+        self.product = Product.objects.create(
+            name='Test Product',
+            category=self.category,
+            price=50,
+            count=5
+        )
+        self.url = reverse('shop:cart_add', args=[self.product.id])
+
+    def test_redirects_if_not_logged_in(self):
+        response = self.client.get(self.url)
+        self.assertRedirects(response, f'/account/login/?next={self.url}')
+
+    def test_add_new_product_to_cart(self):
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get(self.url)
+
+        self.assertRedirects(response, reverse('shop:cart_list'))
+        cart_item = Cart.objects.get(user=self.user, product=self.product)
+        self.assertEqual(cart_item.count, 1)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.count, 4)
+
+    def test_increment_existing_product_in_cart(self):
+        Cart.objects.create(user=self.user, product=self.product, price=self.product.price, count=2)
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get(self.url)
+
+        self.assertRedirects(response, reverse('shop:cart_list'))
+        cart_item = Cart.objects.get(user=self.user, product=self.product)
+        self.assertEqual(cart_item.count, 3)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.count, 4)
+
+    def test_does_not_add_if_product_out_of_stock(self):
+        self.product.count = 0
+        self.product.save()
+
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get(self.url)
+
+        self.assertRedirects(response, self.product.get_absolute_url())
+        self.assertFalse(Cart.objects.filter(user=self.user, product=self.product).exists())
+
+    def test_transaction_rollback_on_error(self):
+        self.client.login(username='testuser', password='testpass123')
+     
+        original_count = self.product.count
+
+        with patch('shop.views.Cart.objects.get_or_create') as mocked_get_or_create:
+            mocked_get_or_create.side_effect = IntegrityError('Forced integrity error')
+
+            with self.assertRaises(IntegrityError):  
+                self.client.get(self.url)
+
+        self.assertFalse(Cart.objects.filter(user=self.user, product=self.product).exists())
+
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.count, original_count)
+
+
+class CartDeleteProductViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', email='test@mail.com', password='testpass123')
+        self.category = Category.objects.create(name = 'testcategory')
+        self.product = Product.objects.create(name='Test Product', price=50, count=5,category=self.category)
+        self.cart_item = Cart.objects.create(user=self.user, product=self.product, count=2, price=self.product.price)
+        self.url = reverse('shop:cart_delete', args=[self.cart_item.id])
+
+    def test_cart_item_deleted_and_product_restored(self):
+        self.client.login(username='testuser', password='testpass123')
+        original_product_count = self.product.count
+        response = self.client.get(self.url)
+
+        self.assertRedirects(response, reverse('shop:cart_list'))
+
+        self.assertFalse(Cart.objects.filter(id=self.cart_item.id).exists())
+
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.count, original_product_count + self.cart_item.count)
+
+    def test_cart_item_only_deletes_if_owner(self):
+        User.objects.create_user(username='other', email='other@mail.com', password='pass123')
+        self.client.login(username='other', password='pass123')
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Cart.objects.filter(id=self.cart_item.id).exists())
+
+    def test_login_required(self):
+        response = self.client.get(self.url)
+        self.assertRedirects(response, f"/account/login/?next={self.url}")
+    
+    def test_transaction_rollback_on_delete_error(self):
+        self.client.login(username='testuser', password='testpass123')
+
+        original_count = self.product.count
+
+        with patch('shop.models.Cart.delete', side_effect=IntegrityError("Forced error")):
+            with self.assertRaises(IntegrityError):
+                self.client.get(self.url)
+
+        self.assertTrue(Cart.objects.filter(id=self.cart_item.id).exists())
+
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.count, original_count)
+
+
+class CartIncrementViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='password123')
+        self.category = Category.objects.create(name='testcategory')
+        self.product = Product.objects.create(
+            id=uuid4(),
+            name='Test Product',
+            category = self.category,
+            price=10,
+            count=5,
+            slug='test-product'
+        )
+        self.cart_item = Cart.objects.create(
+            id=uuid4(),
+            user=self.user,
+            product=self.product,
+            count=1,
+            price=self.product.price
+        )
+        self.url = reverse('shop:cart_increment', args=[self.cart_item.id])
+
+    def test_increment_cart_item(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.cart_item.refresh_from_db()
+        self.product.refresh_from_db()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.cart_item.count, 2)
+        self.assertEqual(self.product.count, 4)
+
+    def test_increment_cart_item_product_out_of_stock(self):
+        self.product.count = 0
+        self.product.save()
+
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+
+        self.cart_item.refresh_from_db()
+        self.product.refresh_from_db()
+
+        self.assertEqual(self.cart_item.count, 1)  
+        self.assertEqual(self.product.count, 0)   
+        self.assertRedirects(response, reverse('shop:cart_list'))
+
+    def test_requires_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/account/login/', response.url)
+
+
+class CartDecrementViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='password123')
+        self.category = Category.objects.create(name='testcategory')
+        self.product = Product.objects.create(
+            id=uuid4(),
+            name='Test Product',
+            category = self.category,
+            price=15,
+            count=3,
+            slug='test-product'
+        )
+        self.cart_item = Cart.objects.create(
+            id=uuid4(),
+            user=self.user,
+            product=self.product,
+            count=2,
+            price=self.product.price
+        )
+        self.url = reverse('shop:cart_decrement', args=[self.cart_item.id])
+
+    def test_decrement_cart_item_success(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+
+        self.cart_item.refresh_from_db()
+        self.product.refresh_from_db()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.cart_item.count, 1)
+        self.assertEqual(self.product.count, 4)
+
+    def test_decrement_not_allowed_when_count_is_one(self):
+        self.cart_item.count = 1
+        self.cart_item.save()
+
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+
+        self.cart_item.refresh_from_db()
+        self.product.refresh_from_db()
+
+        self.assertEqual(self.cart_item.count, 1)
+        self.assertEqual(self.product.count, 3)
+        self.assertRedirects(response, reverse('shop:cart_list'))
+
+    def test_requires_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/account/login/', response.url)
+    
+    def test_transaction_rollback_on_error(self):
+        self.client.force_login(self.user)
+
+        with patch('shop.models.Cart.save', side_effect=IntegrityError("Forced error")):
+            response = None
+            try:
+                response = self.client.get(self.url)
+            except IntegrityError:
+                pass 
+
+            self.cart_item.refresh_from_db()
+            self.product.refresh_from_db()
+
+            self.assertEqual(self.cart_item.count, 2)
+            self.assertEqual(self.product.count, 3)
+
+            self.assertIsNone(response) 
+
+
+class OrderCreateViewTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(name='testcategory')
+        self.street = Street.objects.create(name='teststreet')
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123',
-            account=Decimal('100.00'),
+            password='password123',
+            account=1000
         )
-        self.category = Category.objects.create(name =  'testcategory')
         self.product = Product.objects.create(
-
-            name='Тестовый товар',
-            price=Decimal('25.00'),
-            count=10,
-            slug='test-product',
+            id=uuid4(),
+            name='Test Product',
             category = self.category,
+            price=200,
+            count=10,
+            slug='test-product'
         )
-        ProductInCart.objects.create(
+        self.cart_item = Cart.objects.create(
             user=self.user,
             product=self.product,
             price=self.product.price,
             count=2
         )
-
-    def test_cart_view_requires_login(self):
-        url = reverse('shop:cart')
-        response = self.client.get(url)
-        expected_login_url = reverse('account:login') + f'?next={url}'
-        self.assertRedirects(response, expected_login_url)
-
-    def test_cart_view_returns_correct_context_for_authenticated_user(self):
-        self.client.login(username='testuser', password='testpass123')
-        response = self.client.get(reverse('shop:cart'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shop/cart.html')
-
-        cart = response.context['cart']
-        total = response.context['total']
-
-        self.assertEqual(len(cart), 1)
-        self.assertEqual(cart[0].product.name, 'Тестовый товар')
-        self.assertEqual(total, Decimal('50.00'))
-
-        self.assertEqual(response.context['site_section'], 'cart')
-        self.assertIn('form', response.context)
-
-
-class CartAddProductViewTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass123',email='testemail')
-        self.client.login(username='testuser', password='testpass123')
-
-        self.category = Category.objects.create(name='Test Category', slug='test-category')
-        self.product = Product.objects.create(
-            name='Test Product',
-            count = 12,
-            slug='test-product',
-            category=self.category,
-            price=100.00,
-        )
-
-    def test_cart_add_product_view_adds_product(self):
-        url = reverse('shop:cart_add', args=[self.product.id])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(ProductInCart.objects.filter(user=self.user, product=self.product).exists())
-
-    def test_redirects_to_cart_after_add(self):
-        url = reverse('shop:cart_add', args=[self.product.id])
-        response = self.client.get(url)
-        self.assertRedirects(response, reverse('shop:cart'))
-
-
-class CartDeleteProductViewTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
-        self.client.login(username='testuser', password='testpass123')
-
-        self.category = Category.objects.create(name='Test Category', slug='test-category')
-
-        self.image = SimpleUploadedFile(
-            name='test_image.jpg',
-            content=b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF!\xF9\x04',
-            content_type='image/gif'
-        )
-
-        self.product = Product.objects.create(
-            category=self.category,
-            name='Test Product',
-            price=100.00,
-            count=10,
-            image=self.image,
-        )
-
-        self.product_in_cart = ProductInCart.objects.create(
-            user=self.user,
-            product=self.product,
-            count = 2,
-            price = 200,
-        )
-
-    def test_cart_delete_product_view(self):
-        url = reverse('shop:cart_delete', args=[str(self.product_in_cart.id)])
-        response = self.client.post(url)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('shop:cart'))
-
-        self.assertFalse(ProductInCart.objects.filter(id=self.product_in_cart.id).exists())
-
-
-class CartIncrementViewTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass123', account=1000)
-        self.client.login(username='testuser', password='testpass123')
-
-        self.category = Category.objects.create(name='Test Category')
-
-        self.product = Product.objects.create(
-            id=uuid4(),
-            name='Test Product',
-            category=self.category,
-            price=Decimal('20.00'),
-            count=5,  # на складе 5
-        )
-
-        self.cart_item = ProductInCart.objects.create(
-            user=self.user,
-            product=self.product,
-            price=self.product.price,
-            count=1,
-        )
-
-    def test_increment_success(self):
-        original_product_count = self.product.count
-        original_cart_count = self.cart_item.count
-
-        url = reverse('shop:cart_increment', args=[self.cart_item.id])
-        response = self.client.post(url)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('shop:cart'))
-
-        self.product.refresh_from_db()
-        self.cart_item.refresh_from_db()
-
-        self.assertEqual(self.cart_item.count, original_cart_count + 1)
-        self.assertEqual(self.product.count, original_product_count - 1)
-
-    def test_increment_blocked_if_no_stock(self):
-        self.product.count = 0
-        self.product.save()
-
-        url = reverse('shop:cart_increment', args=[self.cart_item.id])
-        response = self.client.post(url)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('shop:cart'))
-
-        self.cart_item.refresh_from_db()
-        self.assertEqual(self.cart_item.count, 1)
-
-
-class CartDecrementViewTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass123', account=1000)
-        self.client.login(username='testuser', password='testpass123')
-
-        self.category = Category.objects.create(name='Test Category')
-
-        self.product = Product.objects.create(
-            id=uuid4(),
-            name='Test Product',
-            category=self.category,
-            price=Decimal('15.00'),
-            count=3,  # на складе
-        )
-
-        self.cart_item = ProductInCart.objects.create(
-            user=self.user,
-            product=self.product,
-            price=self.product.price,
-            count=2,  # в корзине 2
-        )
-
-    def test_decrement_success(self):
-        original_product_count = self.product.count
-        original_cart_count = self.cart_item.count
-
-        url = reverse('shop:cart_decrement', args=[self.cart_item.id])
-        response = self.client.post(url)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('shop:cart'))
-
-        self.product.refresh_from_db()
-        self.cart_item.refresh_from_db()
-
-        self.assertEqual(self.cart_item.count, original_cart_count - 1)
-        self.assertEqual(self.product.count, original_product_count + 1)
-
-    def test_decrement_blocked_if_count_is_1(self):
-        self.cart_item.count = 1
-        self.cart_item.save()
-        original_product_count = self.product.count
-
-        url = reverse('shop:cart_decrement', args=[self.cart_item.id])
-        response = self.client.post(url)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('shop:cart'))
-
-        self.cart_item.refresh_from_db()
-        self.product.refresh_from_db()
-
-        self.assertEqual(self.cart_item.count, 1)
-        self.assertEqual(self.product.count, original_product_count)
-
-
-class OrderCreateViewTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass123', account=Decimal('1000.00'))
-        self.client.login(username='testuser', password='testpass123')
-
-        self.category = Category.objects.create(name='Test Category')
-        self.product = Product.objects.create(
-            name='Test Product',
-            category=self.category,
-            price=Decimal('100.00'),
-            count=10,
-        )
-
-        self.cart_item = ProductInCart.objects.create(
-            user=self.user,
-            product=self.product,
-            price=self.product.price,
-            count=2,
-        )
-
-        self.street = Street.objects.create(name='Main Street')
-
+        self.url = reverse('shop:order_create')
         self.valid_form_data = {
             'street': self.street.id,
-            'is_private': False,
-            'building': '123',
-            'apartment': '45',
+            'building': '42A',
+            'apartment': '10',
+            'is_private': False
         }
 
     def test_order_created_successfully(self):
-        url = reverse('shop:order_create')
-        response = self.client.post(url, data=self.valid_form_data)
+        self.client.force_login(self.user)
+        response = self.client.post(self.url, self.valid_form_data)
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'shop/order_done.html')
 
+        self.user.refresh_from_db()
         self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(ProductInOrder.objects.count(), 1)
+        self.assertEqual(Cart.objects.filter(user=self.user).count(), 0)
+
         order = Order.objects.first()
         self.assertEqual(order.user, self.user)
-        self.assertEqual(order.street, self.street)
-        self.assertEqual(order.price, Decimal('200.00'))
+        self.assertEqual(order.price, 400) 
+        self.assertEqual(self.user.account, 600)
 
-        self.assertEqual(ProductInOrder.objects.count(), 1)
-        product_in_order = ProductInOrder.objects.first()
-        self.assertEqual(product_in_order.count, 2)
-
-        self.assertEqual(ProductInCart.objects.filter(user=self.user).count(), 0)
-
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.account, Decimal('800.00'))
-
-    def test_order_not_created_if_balance_too_low(self):
-        self.user.account = Decimal('100.00') 
+    def test_order_not_created_due_to_low_balance(self):
+        self.user.account = 100
         self.user.save()
+        self.client.force_login(self.user)
+        response = self.client.post(self.url, self.valid_form_data)
 
-        response = self.client.post(reverse('shop:order_create'), data=self.valid_form_data)
-
-        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'shop/low_balance.html')
         self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(ProductInOrder.objects.count(), 0)
+        self.assertEqual(Cart.objects.filter(user=self.user).count(), 1)
 
-    def test_order_not_created_if_cart_empty(self):
-        ProductInCart.objects.all().delete()
+    def test_order_not_created_due_to_invalid_form(self):
+        self.user.account = Decimal('1000.00')
+        self.user.save()
+        self.client.force_login(self.user)
 
-        response = self.client.post(reverse('shop:order_create'), data=self.valid_form_data)
-        self.assertRedirects(response, reverse('shop:cart'))
-        self.assertEqual(Order.objects.count(), 0)
+        Cart.objects.create(user=self.user, product=self.product, price=self.product.price, count=1)
 
-
-class OrderListViewTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass123')
-        self.client.login(username='testuser', password='testpass123')
-
-        self.other_user = User.objects.create_user(username='otheruser', password='pass' ,email='useremail')
-
-        self.street = Street.objects.create(name='Main Street')
-
-        self.order1 = Order.objects.create(
-            user=self.user,
-            street=self.street,
-            is_private=False,
-            building='10',
-            apartment='5',
-            price=100,
-            is_delivered=False,
-        )
-        self.order2 = Order.objects.create(
-            user=self.user,
-            street=self.street,
-            is_private=False,
-            building='20',
-            apartment='8',
-            price=150,
-            is_delivered=True,
-        )
-
-        self.order3 = Order.objects.create(
-            user=self.other_user,
-            street=self.street,
-            is_private=True,
-            building='99',
-            apartment='',
-            price=200,
-            is_delivered=False,
-        )
-
-    def test_order_list_view_returns_only_undelivered_orders_for_user(self):
-        url = reverse('shop:order_list')
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shop/order_list.html')
-
-        orders = response.context['orders']
-        self.assertEqual(len(orders), 1)
-        self.assertIn(self.order1, orders)
-        self.assertNotIn(self.order2, orders)
-        self.assertNotIn(self.order3, orders)
-
-
-class OrderRecievedViewTest(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass123',email='testemail')
-        self.client.login(username='testuser', password='testpass123')
-
-        self.category = Category.objects.create(name='Test Category')
-        self.street = Street.objects.create(name='Main Street')
-        self.product = Product.objects.create(
-            category=self.category,
-            name='Test Product',
-            price=Decimal('10.00'),
-            count=5
-        )
-
-        self.order = Order.objects.create(
-            user=self.user,
-            street=self.street,
-            is_private=False,
-            building='12',
-            apartment='34',
-            price=Decimal('10.00')
-        )
-
-        self.product_in_order = ProductInOrder.objects.create(
-            product=self.product,
-            price=Decimal('10.00'),
-            order=self.order,
-            count=1
-        )
-
-    def test_get_order_recieved_view_marks_order_as_delivered(self):
-        url = reverse('shop:order_recieved', args=[self.order.id])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shop/order_recieved.html')
-
-        self.order.refresh_from_db()
-        self.assertTrue(self.order.is_delivered)
-
-    def test_post_valid_feedback_creates_feedback_and_deletes_productinorder(self):
-        url = reverse('shop:order_recieved', args=[self.order.id])
         data = {
-            'rating': 4,
-            'review': 'Great product!',
-            'product_id': str(self.product.id),
+            'building': '123',
+            'apartment': '45',
+            'is_private': False,
         }
 
-        response = self.client.post(url, data)
+        response = self.client.post(reverse('shop:order_create'), data,follow=True)
 
-        feedback = UsersProducts.objects.filter(user=self.user, product=self.product).first()
-        self.assertIsNotNone(feedback)
-        self.assertEqual(feedback.rating, 4)
-        self.assertEqual(feedback.review, 'Great product!')
+        self.assertTemplateUsed(response, 'shop/cart_list.html')
+        self.assertFormError(response.context['form'], 'street', 'Обязательное поле.')
 
-      
+    def test_login_required(self):
+        response = self.client.post(self.url, self.valid_form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/account/login/', response.url)
+
+    def test_transaction_rollback_on_exception(self):
+        self.user.account = 1000
+        self.user.save()
+        self.client.force_login(self.user)
+
+        Cart.objects.filter(user=self.user).delete()
+        Cart.objects.create(user=self.user, product=self.product, price=100, count=1)
+    
+        valid_data = {
+            'street': self.street.id,
+            'is_private': True,
+            'building': '1',
+        }
+
+        with mock.patch('shop.views.ProductInOrder.objects.create', side_effect=IntegrityError):
+            with self.assertRaises(IntegrityError):
+                self.client.post(self.url, data=valid_data)
+
+        self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(ProductInOrder.objects.count(), 0)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.account, 1000)
+
+        self.assertEqual(Cart.objects.filter(user=self.user).count(), 1)
+
+
+class OrderReceivedViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='pass123',email='test@email.com')
+        self.category = Category.objects.create(name='testcategory')
+        self.street = Street.objects.create(name='teststreet')
+        self.product = Product.objects.create(name='TestProduct', price=100,category=self.category,count=10)
+        self.order = Order.objects.create(user=self.user, is_delivered=False,price=2000,is_private=True,street=self.street)
+        self.order_item = ProductInOrder.objects.create(order=self.order, product=self.product, price=100, count=1)
+        self.url = reverse('shop:order_received', kwargs={'id': self.order.id})
+
+    def test_redirects_if_not_logged_in(self):
+        response = self.client.get(self.url)
+        self.assertNotEqual(response.status_code, 200)
+        self.assertIn(response.status_code, [302, 403])
+
+    def test_marks_order_as_delivered_on_get(self):
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.get(self.url)
+        self.order.refresh_from_db()
+        self.assertTrue(self.order.is_delivered)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'shop/order_received.html')
+
+    def test_valid_feedback_submission_creates_feedback_and_removes_product(self):
+        self.client.login(username='testuser', password='pass123')
+        data = {
+            'product_id': str(self.product.id),
+            'rating': 5,
+            'review': 'Отличный товар!',
+        }
+        response = self.client.post(self.url, data, follow=True)
+        self.assertEqual(Feedback.objects.count(), 1)
+
+        feedback = Feedback.objects.first()
+        self.assertEqual(feedback.user, self.user)
+        self.assertEqual(feedback.product, self.product)
+        self.assertEqual(feedback.rating, 5)
+
         self.assertFalse(
             ProductInOrder.objects.filter(order=self.order, product=self.product).exists()
         )
+        self.assertTemplateUsed(response, 'shop/order_received.html')
 
-       
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shop/order_recieved.html')
+    def test_post_for_product_not_in_order_redirects(self):
+        self.client.login(username='testuser', password='pass123')
 
-    def test_post_invalid_product_redirects(self):
-        other_product = Product.objects.create(
-            category=self.category,
-            name='Another Product',
-            price=Decimal('15.00'),
-            count=3
-        )
+        ProductInOrder.objects.filter(order=self.order, product=self.product).delete()
 
-        url = reverse('shop:order_recieved', args=[self.order.id])
         data = {
-            'rating': 5,
-            'review': 'Should fail',
-            'product_id': str(other_product.id),
+            'product_id': str(self.product.id),
+            'rating': 4,
+            'review': 'ещё отзыв',
         }
-
-        response = self.client.post(url, data)
-
+        response = self.client.post(self.url, data)
         self.assertRedirects(response, reverse('shop:order_list'))
-
-        self.assertFalse(
-            UsersProducts.objects.filter(user=self.user, product=other_product).exists()
-        )
+        self.assertEqual(Feedback.objects.count(), 0)
 
 
-class ReviewDeleteViewTest(TestCase):
+class ReviewDeleteViewTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='reviewer', email='reviewer@example.com', password='testpass')
-        self.other_user = User.objects.create_user(username='otheruser', email='other@example.com', password='testpass')
-
-        self.category = Category.objects.create(name='Test Category')
-        self.product = Product.objects.create(
-            name='Test Product',
-            category=self.category,
-            price=Decimal('9.99'),
-            count=10
-        )
-
-        self.review = UsersProducts.objects.create(
+        self.user = User.objects.create_user(username='user1', password='pass',email='test@email.com')
+        self.other_user = User.objects.create_user(username='user2', password='pass',email='test2@email.com')
+        self.category = Category.objects.create(name='testcategory')
+        self.product = Product.objects.create(name='TestProduct', price=100,category=self.category,count=10)
+        self.feedback = Feedback.objects.create(
             user=self.user,
             product=self.product,
-            rating=4,
-            review='Nice one'
+            rating=5,
+            review='Отзыв!',
         )
 
-    def test_user_can_delete_own_review(self):
-        self.client.login(username='reviewer', password='testpass')
-        url = reverse('shop:review_delete', args=[self.review.id])
-        response = self.client.post(url)
+        self.url = reverse('shop:review_delete', kwargs={'id': self.feedback.id})
 
-        expected_redirect = reverse('shop:product_detail', args=[self.product.slug])
-        self.assertRedirects(response, expected_redirect)
-
-        self.assertFalse(UsersProducts.objects.filter(id=self.review.id).exists())
-
-    def test_user_cannot_delete_others_review(self):
-        self.client.login(username='otheruser', password='testpass')
-        url = reverse('shop:review_delete', args=[self.review.id])
-        response = self.client.post(url)
-
+    def test_redirects_if_not_logged_in(self):
+        response = self.client.post(self.url)
         self.assertNotEqual(response.status_code, 200)
-        self.assertTrue(UsersProducts.objects.filter(id=self.review.id).exists())
+        self.assertIn(response.status_code, [302, 403])
 
+    def test_user_can_clear_own_review(self):
+        self.client.login(username='user1', password='pass')
+        response = self.client.post(self.url, follow=True)
+        self.feedback.refresh_from_db()
+        self.assertIsNone(self.feedback.review)
+        self.assertRedirects(response, self.product.get_absolute_url())
 
-
-
-
-
+    def test_user_cannot_clear_others_review(self):
+        self.client.login(username='user2', password='pass')
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 404)
+        self.feedback.refresh_from_db()
+        self.assertEqual(self.feedback.review, 'Отзыв!')
 
 
 
