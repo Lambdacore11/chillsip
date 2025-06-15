@@ -1,59 +1,22 @@
 from decimal import Decimal
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm,PasswordChangeForm
-import re
+from django.contrib.auth.forms import AuthenticationForm,UserCreationForm
 
 
-class UserRegisterForm(forms.ModelForm):
-    
-    password = forms.CharField(label='Пароль',widget=forms.PasswordInput)
-    password2 = forms.CharField(label='Повторите пароль',widget=forms.PasswordInput)
+class UserRegisterForm(UserCreationForm):
 
     class Meta:
-
         model = get_user_model()
-        fields = ['username','email']
+        fields = ['username', 'email']
     
-    def clean_username(self):
-
-        username = self.cleaned_data['username']
+    def  clean_username(self):
+        username = super().clean_username()
 
         if len(username) < 5:
             raise forms.ValidationError('Имя пользователя должно быть не менее 5 символов')
-        
+
         return username
-
-    def clean_password2(self):
-
-        password = self.cleaned_data['password']
-        password2 = self.cleaned_data['password2']
-
-        if len(password) < 8 :
-            raise forms.ValidationError('Пароль должен содержать не менее 8 символов')
-        
-        elif re.search(r'^[0-9]+$',password):
-            raise forms.ValidationError('Введённый пароль состоит только из цифр.')
-        
-        elif password != password2:
-            raise forms.ValidationError('Пароли не совпадают')
-        
-        return password2
-
-
-class UserPasswordChangeForm(PasswordChangeForm):
-
-    def clean_new_password1(self):
-
-        password = self.cleaned_data['new_password1']
-
-        if len(password) < 8 :
-            raise forms.ValidationError('Пароль должен содержать не менее 8 символов')
-        
-        elif re.search(r'^[0-9]+$',password):
-            raise forms.ValidationError('Введённый пароль состоит только из цифр.')
-        
-        return password
 
 
 class UserLoginForm(AuthenticationForm):

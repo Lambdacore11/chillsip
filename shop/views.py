@@ -96,11 +96,11 @@ class CartAddProductView(LoginRequiredMixin,View):
             )
             if not created:
                 cart_item.count = F('count') + 1
-                cart_item.save()
+                cart_item.save(update_fields=['count'])
                 cart_item.refresh_from_db()
         
             product.count = F('count') - 1
-            product.save()
+            product.save(update_fields=['count'])
             product.refresh_from_db()
 
         return redirect('shop:cart_list')
@@ -113,7 +113,7 @@ class CartDeleteProductView(LoginRequiredMixin,View):
 
         with transaction.atomic():
             product.count = F('count') + cart_item.count
-            product.save()
+            product.save(update_fields=['count'])
             product.refresh_from_db()
             cart_item.delete()
 
@@ -130,9 +130,9 @@ class CartIncrementView(LoginRequiredMixin,View):
             with transaction.atomic():
                 cart_item.count = F('count') + 1
                 product.count = F('count') - 1 
-                product.save()
+                product.save(update_fields=['count'])
                 product.refresh_from_db()
-                cart_item.save()
+                cart_item.save(update_fields=['count'])
                 cart_item.refresh_from_db()
 
         return redirect('shop:cart_list')
@@ -148,9 +148,9 @@ class CartDecrementView(LoginRequiredMixin,View):
             with transaction.atomic():
                 cart_item.count = F('count') - 1
                 product.count = F('count') + 1 
-                product.save()
+                product.save(update_fields=['count'])
                 product.refresh_from_db()
-                cart_item.save()
+                cart_item.save(update_fields=['count'])
                 cart_item.refresh_from_db()
 
         return redirect('shop:cart_list')
@@ -191,7 +191,7 @@ class OrderCreateView(LoginRequiredMixin,View):
 
                 cart.delete()
                 user.account = F('account') - total
-                user.save()
+                user.save(update_fields=['account'])
                 user.refresh_from_db()
             
             return render(self.request,'shop/order_done.html',{'order_id':order.id})
@@ -227,7 +227,7 @@ class OrderReceivedView(AccessMixin, FormView):
 
         if not self.order.is_delivered:
             self.order.is_delivered = True
-            self.order.save()
+            self.order.save(update_fields=['is_delivered'])
 
         self.products = Product.objects.filter(id__in=self.order.products.all().values('product_id'))
 

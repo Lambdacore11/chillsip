@@ -3,24 +3,18 @@ from django.urls import reverse,reverse_lazy
 from django.contrib.auth import views,get_user_model
 from django.views.generic import UpdateView
 from django.db.models import F
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin,AccessMixin
-from django.views.generic import TemplateView,FormView
+from django.views.generic import TemplateView,FormView,CreateView
 from .forms import *
 from .models import SuspiciousUser
 
 
-class UserRegisterView(FormView):
+class UserRegisterView(CreateView):
     model = get_user_model()
     form_class = UserRegisterForm
     template_name = 'account/register.html'
     success_url = reverse_lazy('account:register_done')
-
-    def form_valid(self, form):
-        cd = form.cleaned_data
-        user = form.save(commit=False)
-        user.set_password(cd['password'])
-        user.save()
-        return super().form_valid(form)
 
 class UserLoginView(views.LoginView):
     form_class = UserLoginForm
@@ -31,7 +25,7 @@ class UserLogoutView(LoginRequiredMixin,views.LogoutView):
 
 
 class UserPasswordChangeView(LoginRequiredMixin,views.PasswordChangeView):
-    form_class = UserPasswordChangeForm
+    form_class = PasswordChangeForm
     template_name = 'account/password_change.html'
     success_url = reverse_lazy('account:password_change_done')
     

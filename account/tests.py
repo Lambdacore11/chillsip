@@ -13,6 +13,7 @@ from PIL import Image
 from django.conf import settings
 from account.models import SuspiciousUser
 from .forms import *
+from django.contrib.auth.forms import PasswordChangeForm
 
 
 User = get_user_model()
@@ -59,7 +60,7 @@ class UserModelTest(TestCase):
                 password='adminpass',
                 is_staff=False
             )
-
+    
     def test_account_default(self):
         user = User.objects.create_user(
             username='newuser',
@@ -143,7 +144,7 @@ class UserRegisterFormTest(TestCase):
         form_data = {
             'username': 'validuser',
             'email': 'valid@example.com',
-            'password': 'StrongPass123',
+            'password1': 'StrongPass123',
             'password2': 'StrongPass123'
         }
         form = UserRegisterForm(data=form_data)
@@ -153,7 +154,7 @@ class UserRegisterFormTest(TestCase):
         form_data = {
             'username': 'abc',
             'email': 'test@example.com',
-            'password': 'StrongPass123',
+            'password1': 'StrongPass123',
             'password2': 'StrongPass123'
         }
         form = UserRegisterForm(data=form_data)
@@ -164,7 +165,7 @@ class UserRegisterFormTest(TestCase):
         form_data = {
             'username': 'goodname',
             'email': 'test@example.com',
-            'password': '12345',
+            'password1': '12345',
             'password2': '12345'
         }
         form = UserRegisterForm(data=form_data)
@@ -175,7 +176,7 @@ class UserRegisterFormTest(TestCase):
         form_data = {
             'username': 'goodname',
             'email': 'test@example.com',
-            'password': '12345678',
+            'password1': '12345678',
             'password2': '12345678'
         }
         form = UserRegisterForm(data=form_data)
@@ -186,12 +187,56 @@ class UserRegisterFormTest(TestCase):
         form_data = {
             'username': 'goodname',
             'email': 'test@example.com',
-            'password': 'Goodpass123',
+            'password1': 'Goodpass123',
             'password2': 'Wrongpass123'
         }
         form = UserRegisterForm(data=form_data)
         self.assertFalse(form.is_valid())
         self.assertIn('password2', form.errors)
+    
+    def test_passwords_empty_password1(self):
+        form_data = {
+            'username': 'goodname',
+            'email': 'test@example.com',
+            'password1': '',
+            'password2': 'Goodpass123'
+        }
+        form = UserRegisterForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('password1', form.errors)
+    
+    def test_passwords_empty_password2(self):
+        form_data = {
+            'username': 'goodname',
+            'email': 'test@example.com',
+            'password1': 'Goodpass123',
+            'password2': ''
+        }
+        form = UserRegisterForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('password2', form.errors)
+    
+    
+    def test_invalid_email_rejected(self):
+        form_data = {
+            'username': 'validuser',
+            'email': 'invalid-email',
+            'password1': 'StrongPass123',
+            'password2': 'StrongPass123',
+        }
+        form = UserRegisterForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('email', form.errors)
+
+    def test_valid_email_accepted(self):
+        form_data = {
+            'username': 'validuser',
+            'email': 'valid@example.com',
+            'password1': 'StrongPass123',
+            'password2': 'StrongPass123',
+        }
+        form = UserRegisterForm(data=form_data)
+        self.assertTrue(form.is_valid())
 
 
 class UserPasswordChangeFormTest(TestCase):
@@ -209,7 +254,7 @@ class UserPasswordChangeFormTest(TestCase):
             'new_password1': 'NewStrongPass123',
             'new_password2': 'NewStrongPass123',
         }
-        form = UserPasswordChangeForm(user=self.user, data=form_data)
+        form = PasswordChangeForm(user=self.user, data=form_data)
         self.assertTrue(form.is_valid())
 
     def test_short_new_password(self):
@@ -218,10 +263,9 @@ class UserPasswordChangeFormTest(TestCase):
             'new_password1': 'short',
             'new_password2': 'short',
         }
-        form = UserPasswordChangeForm(user=self.user, data=form_data)
+        form = PasswordChangeForm(user=self.user, data=form_data)
         self.assertFalse(form.is_valid())
-        self.assertIn('new_password1', form.errors)
-        self.assertIn('не менее 8 символов', form.errors['new_password1'][0])
+        self.assertIn('new_password2', form.errors)
 
     def test_numeric_password(self):
         form_data = {
@@ -229,10 +273,9 @@ class UserPasswordChangeFormTest(TestCase):
             'new_password1': '12345678',
             'new_password2': '12345678',
         }
-        form = UserPasswordChangeForm(user=self.user, data=form_data)
+        form = PasswordChangeForm(user=self.user, data=form_data)
         self.assertFalse(form.is_valid())
-        self.assertIn('new_password1', form.errors)
-        self.assertIn('состоит только из цифр', form.errors['new_password1'][0])
+        self.assertIn('new_password2', form.errors)
 
     def test_password_mismatch(self):
         form_data = {
@@ -240,7 +283,7 @@ class UserPasswordChangeFormTest(TestCase):
             'new_password1': 'NewPass123',
             'new_password2': 'OtherPass456',
         }
-        form = UserPasswordChangeForm(user=self.user, data=form_data)
+        form = PasswordChangeForm(user=self.user, data=form_data)
         self.assertFalse(form.is_valid())
         self.assertIn('new_password2', form.errors)
     
@@ -250,7 +293,7 @@ class UserPasswordChangeFormTest(TestCase):
             'new_password1': 'NewValidPass456',
             'new_password2': 'NewValidPass456',
         }
-        form = UserPasswordChangeForm(user=self.user, data=form_data)
+        form = PasswordChangeForm(user=self.user, data=form_data)
         self.assertTrue(form.is_valid())
         
         form.save()
@@ -342,6 +385,10 @@ class UserUpdateFormTest(TestCase):
         self.assertEqual(user.age, 30)
         self.assertEqual(user.gender, 'm')
         self.assertTrue(user.foto.name.startswith('foto/'))
+    
+    def test_invalid_email_does_not_updates_user(self):
+        form = UserUpdateForm(data={'email':'wrongemail'},instance=self.user)
+        self.assertFalse(form.is_valid(), form.errors)
 
 
 class MoneyUpdateFormTest(TestCase):
@@ -390,18 +437,9 @@ class UserRegisterViewTests(TestCase):
         response = self.client.post(self.url, invalid_data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertFormError(response.context['form'], 'password2', 'Пароли не совпадают')
+        self.assertFalse(response.context['form'].is_valid())
         self.assertEqual(get_user_model().objects.count(), 0)
 
-    def test_register_view_post_invalid_data(self):
-        invalid_data = self.data.copy()
-        invalid_data['password2'] = 'Mismatch123'
-        response = self.client.post(self.url, invalid_data)
-
-        self.assertEqual(response.status_code, 200)
-        form = response.context['form']
-        self.assertFormError(form, 'password2', 'Пароли не совпадают') 
-        self.assertEqual(get_user_model().objects.count(), 0)
 
 class UserLoginViewTest(TestCase):
     def setUp(self):
