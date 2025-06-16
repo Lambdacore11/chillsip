@@ -1,12 +1,13 @@
 from pathlib import Path
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure--k66om3sg%ifmc3i*&!gdu@=qad)jf+r=!nc4!u41c^w^dzjy='
+SECRET_KEY = config('SECRET_KEY')
 
-DEBUG = True
+DEBUG = config('DEBUG',cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,10 +54,10 @@ WSGI_APPLICATION = 'chillsip.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'chillsip',
-        'USER':'postgres',
-        'PASSWORD':'321l'
+        'ENGINE': config('DBENGINE'),
+        'NAME': config('DBNAME'),
+        'USER':config('DBUSER'),
+        'PASSWORD':config('DBPASSWORD')
     }
 }
 
