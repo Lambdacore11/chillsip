@@ -28,12 +28,12 @@ $(document).ready(function() {
         form.addEventListener('submit',(ev)=>{
             ev.preventDefault();
             let errors = '';
-            if (id_is_private.checked && id_apartment) {
+            if (id_is_private.checked && id_apartment.value) {
                 errors +=`
                     <div class="text text_error">Вы указали квартиру при выборе пункта "частный дом"</div>
                 `
             }
-            else if (!id_is_private.checked && !id_apartment) {
+            else if (!id_is_private.checked && !id_apartment.value) {
                 errors +=`
                     <div class="text text_error">Необходимо указать квартиру если не выбран пункт "частный дом"</div>
                 `
