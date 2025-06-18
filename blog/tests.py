@@ -213,11 +213,14 @@ class PostCreateViewTest(TestCase):
             'content': 'Тестовый контент',
             'image': image,
         }
+
         response = self.client.post(self.url, data, follow=True)
         self.assertEqual(response.status_code, 200)
         post = Post.objects.get(name='Новый пост')
         self.assertEqual(post.user, self.user)
         self.assertEqual(post.content, 'Тестовый контент')
+        if post.image:
+            post.image.delete(save=False)
 
 class PostCreateDoneViewTest(TestCase):
     def setUp(self):
