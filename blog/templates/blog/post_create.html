@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %} Новый пост {% endblock title %}
+
+{% block content %}
+    <h1 class="h1">новый пост</h1>
+
+    <div class="formFeedback">
+		{% if form.errors %}
+			{% for field, error in form.errors.items %}
+				<div class="text text_error">{{ error|striptags }}</div>
+			{% endfor %}
+        {% endif %}
+	</div>
+
+	<form class="form" method="POST" enctype="multipart/form-data">
+		{% csrf_token %}
+		{% for element in form %}
+			{% if element != form.image %}
+				<div class="form__group">
+                    <label class="form__label" for="{{ element.id_for_label }}">{{ element.label }}</label>
+                    {{ element }}
+				</div>
+			{% endif %}
+		{% endfor %}
+			<label class="form__label text_bold" for="id_image">загрузить изображение</label>
+			<input type="file" name="image" accept="image/*" id="id_image">
+		<input class="form__submit" type="submit" value="Отправить">
+	</form>
+{% endblock content %}

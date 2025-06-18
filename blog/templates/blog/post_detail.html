@@ -5,8 +5,8 @@
 {% block title %}Пост{% endblock title %}
 
 {% block content %}
-    <div class="post">
-        <img class="post__image" src="{{ post.image.url }}">
+    <div class="post post_detail">
+        <img class="post__image" src="{% if post.image %} {{ post.image.url }} {% else %} {% static 'images/post_no_image.jpg' %} {% endif %}">
         <h2 class="h2">{{ post.name }}</h2>
         <div class="text">{{ post.content }}</div>
     </div>
@@ -19,8 +19,7 @@
         <input type="hidden" name="post_id" value="{{ post.id }}">
 		<input class="form__submit" type="submit" value="Оставить комментарий">
 	</form>
-
-    {% for comment in post.comments.all %}
+    {% for comment in comments %}
         <div class="comment">
             <div class="user">
                 <img class="userFoto" src="{% if comment.user.foto %}{{comment.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
@@ -37,5 +36,6 @@
     {% empty %}
         <div class="text">будьте первым кто оставит комментарий</div>
     {% endfor %}
+    {% include 'pagination.html' with page_obj=comments %}
 
 {% endblock content %}

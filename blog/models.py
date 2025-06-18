@@ -6,7 +6,6 @@ from django.urls import reverse
 
 
 class Post(models.Model):
-
     id = models.UUIDField(primary_key=True,
         default=uuid4, 
         editable=False,
@@ -72,7 +71,6 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
-
     id = models.UUIDField(primary_key=True,
         default=uuid4, 
         editable=False,

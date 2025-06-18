@@ -7,12 +7,14 @@ class PostAdmin(admin.ModelAdmin):
     list_display = [
         'name',
         'content',
+        'is_published',
         'image',
         'created',
-        'updated'
+        'updated',
     ]
     list_filter = [
-        'created'
+        'is_published',
+        'created',
     ]
 
 

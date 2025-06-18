@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block title %} Пост принят {% endblock title %}
+
+{% block content %}
+    <h1 class="h1">ваш пост принят на рассмотрение</h1>
+    <div class="text">после одобрения он появиться в списке</div>
+    <a class="link" href="{% url 'blog:post_list' %}">вернутья к постам</a>
+{% endblock content %}
