@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 
-DEBUG = config('DEBUG',cast=bool)
+DEBUG = False
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
 
@@ -57,7 +57,9 @@ DATABASES = {
         'ENGINE': config('DBENGINE'),
         'NAME': config('DBNAME'),
         'USER':config('DBUSER'),
-        'PASSWORD':config('DBPASSWORD')
+        'PASSWORD':config('DBPASSWORD'),
+        'HOST':config('DBHOST'),
+        'PORT':config('DBPORT')
     }
 }
 
@@ -84,7 +86,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'static'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -94,13 +100,9 @@ LOGIN_REDIRECT_URL = 'shop:product_list'
 LOGIN_URL = 'account:login'
 LOGOUT_URL = 'account:logout'
 
-
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'account.authentication.EmailAuthBackend',
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'

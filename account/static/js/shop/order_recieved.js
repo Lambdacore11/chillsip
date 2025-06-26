@@ -13,10 +13,10 @@ if (stars) {
 
             stars.forEach(el=>{
                 if (Number(el.parentElement.dataset['number']) == group_number && Number(el.dataset['number']) > element_number) {
-                    el.src = 'http://localhost:8000/static/images/rating/star.png';
+                    el.src = `${window.STATIC_URL}images/rating/star.png`;
                 }
                 else if (Number(el.parentElement.dataset['number']) == group_number) {
-                    el.src = 'http://localhost:8000/static/images/rating/star_selected.png';
+                    el.src = `${window.STATIC_URL}images/rating/star_selected.png`;
                 }
             })   
         

@@ -1,0 +1,59 @@
+services:
+
+  db:
+    image: postgres:17.5-alpine
+    networks:
+      - chillsip_network
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: ${DBNAME}
+      POSTGRES_USER: ${DBUSER}
+      POSTGRES_PASSWORD: ${DBPASSWORD}
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    networks:
+      - chillsip_network
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+    env_file:
+      - .env
+    depends_on:
+      - db
+    ports:
+    - "8000:8000"
+    command: >
+      sh -c "while ! nc -z ${DBHOST} ${DBPORT}; do sleep 1; done &&
+        python manage.py migrate &&
+        if [ -f dbdata.json ]; then
+        python manage.py loaddata dbdata.json --exclude=contenttypes --exclude=auth.permission &&
+        rm -f dbdata.json;
+        fi &&
+        python manage.py collectstatic --noinput &&
+        gunicorn chillsip.wsgi:application --bind 0.0.0.0:8000 --workers 2"
+
+  nginx:
+    image: nginx:1.27-alpine
+    networks:
+      - chillsip_network
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/app/static
+      - media_volume:/app/media
+    depends_on:
+      - web
+
+networks:
+  chillsip_network:
+    driver: bridge
+
+volumes:
+  static_volume:
+  media_volume:
+  pgdata:

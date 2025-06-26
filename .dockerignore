@@ -1,0 +1,11 @@
+__pycache__/
+.env
+.git/
+.gitignore
+tests/
+static/
+docker-compose.yml
+Dockerfile
+.dockerignore
+docker-compose.yml
+nginx/
