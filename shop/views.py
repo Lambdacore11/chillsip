@@ -22,13 +22,13 @@ class ProductListView(ListView):
     paginate_by = 8
 
     def get_queryset(self):
-        queryset = super().get_queryset().order_by('?')
+        queryset = super().get_queryset()
         self.category = None
         category_slug = self.kwargs.get('category_slug')
 
         if category_slug:
             self.category = get_object_or_404(Category, slug=category_slug)
-            queryset = queryset.filter(category=self.category).order_by('-created')
+            queryset = queryset.filter(category=self.category)
 
         return queryset
 

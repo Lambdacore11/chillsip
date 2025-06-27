@@ -25,6 +25,9 @@
                     <a class="link link_altColor {% if site_section == 'post_list' %}link_selected link_altBorder {% endif %}" href="{% url 'blog:post_list' %}">блог</a>
                 </nav>
                 <div class="auth">
+                    <button type="button" class="button_theme">
+                        <img class="header__icon header_icon_theme" src="{% static 'images/dark.png' %}">
+                    </button>
                     {% if user.is_authenticated %}
                         <a href="{% url 'account:money_update' user.slug %}">
                            <div class="text text_altColor">{{ user.account }}₽</div>
@@ -44,26 +47,31 @@
 
         <div class="header__mobile">
             <a class="logo" href="/" >
-                <img class="logo__image header__mobileImg" src="{% static 'images/logo.jpg' %}">
+                <img class="logo__image" src="{% static 'images/logo.jpg' %}">
             </a>
-            <a  href="{% url 'shop:about' %}"><img class="header__mobileImg"  src="{% static 'images/mobile_icons/about.png' %}"></a>
-            <a  href="{% url 'shop:product_list' %}"><img class="header__mobileImg" src="{% static 'images/mobile_icons/home.png' %}"></a>
-            <a  href="{% url 'shop:cart_list' %}"><img class="header__mobileImg" src="{% static 'images/mobile_icons/cart.png' %}"></a>
-            <a  href="{% url 'shop:order_list' %}"><img  class="header__mobileImg"src="{% static 'images/mobile_icons/orders.png' %}"></a>
-            <a  href="{% url 'blog:post_list' %}"><img class="header__mobileImg" src="{% static 'images/mobile_icons/blog.png' %}"></a>
+            <a  href="{% url 'shop:about' %}"><img class="header__icon"  src="{% static 'images/mobile_icons/about.png' %}"></a>
+            <a  href="{% url 'shop:product_list' %}"><img class="header__icon" src="{% static 'images/mobile_icons/home.png' %}"></a>
+            <a  href="{% url 'shop:cart_list' %}"><img class="header__icon" src="{% static 'images/mobile_icons/cart.png' %}"></a>
+            <a  href="{% url 'shop:order_list' %}"><img  class="header__icon"src="{% static 'images/mobile_icons/orders.png' %}"></a>
+            <a  href="{% url 'blog:post_list' %}"><img class="header__icon" src="{% static 'images/mobile_icons/blog.png' %}"></a>
+            <button type="button" class="button_theme">
+                <img class="header__icon header_icon_theme" src="{% static 'images/dark.png' %}">
+            </button>
             {% if user.is_authenticated %}
                 <a href="{% url 'account:money_update' user.slug %}">
                     <div class="text text_altColor ">{{ user.account }}₽</div>
                 </a>
                 <a href="{% url 'account:profile' user.slug %}">
-                    <img class="userFoto header__mobileImg" class="userFoto" src="{% if user.foto %}{{user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
+                    <img class="userFoto header__icon" class="userFoto" src="{% if user.foto %}{{user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
                 </a>
                 <form class="logout" action="{% url 'account:logout' %}" method="POST">
                     {% csrf_token %}
-                    <input class="link link_altColor" type="submit" value="выйти">
+                    <button type="submit" class="button_exit">
+                        <img class="header__icon" src="{% static 'images/mobile_icons/exit.png' %}">
+                    </button>
                 </form>
             {% else %}
-                <a class="link link_altColor" href="{% url 'account:login' %}"><img class="header__mobileImg" src="{% static 'images/mobile_icons/enter.png' %}"></a>
+                <a class="link link_altColor" href="{% url 'account:login' %}"><img class="header__icon" src="{% static 'images/mobile_icons/enter.png' %}"></a>
             {% endif %}
            
      
@@ -97,4 +105,7 @@
         </div>
     </footer>
 </body>
+<script>window.STATIC_URL = "{% static '' %}"</script>  
+<script src="{% static 'js/theme.js' %}"></script>
+<script>document.body.classList.add('ready')</script>
 </html>
