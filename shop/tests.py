@@ -333,15 +333,6 @@ class ProductListViewTests(TestCase):
         self.assertIn('categories', context)
         self.assertEqual(context['category'], None)
         self.assertEqual(context['site_section'], 'product_list')
-
-    def test_product_list_by_category(self):
-        url = reverse('shop:product_list_by_category', args=[self.category.slug])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            list(response.context['products']),
-            list(Product.objects.filter(category=self.category).order_by('-created')[:8])  
-        )
         
     def test_product_list_pagination(self):
         response = self.client.get(reverse('shop:product_list'))

@@ -5,8 +5,16 @@
 {% block title %}Каталог{% endblock title %}
 
 {% block content %}
+    <div class="splide" role="group" aria-label="Splide Basic HTML Example">
+        <div class="splide__track">
+		    <div class="splide__list">
+                {% for product in rand_products%}
+                    <a class="splide__slide" href="{{ product.get_absolute_url }}"><img src="{{product.image.url}}"></a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
     <div class="catalog">
-
         <div class="sidebar">
             <h3 class="h3">меню</h3>
             <a class="link {% if not category %}link_selected{% endif %}" href="{% url 'shop:product_list' %}">все</a>
@@ -20,5 +28,21 @@
         </div>
 
     </div>
+
+    <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide-extension-autoplay@4.1.4/dist/js/splide-extension-autoplay.min.js"></script>
+    <script>
+        new Splide('.splide',{
+            type : 'loop',
+            perPage:4,
+            gap: '0.5rem',
+            autoplay: true,
+            interval: 3000,
+            breakpoints: {
+                1000: { perPage: 2},
+            }
+        }).mount();
+    </script>
     <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 {% endblock content %}

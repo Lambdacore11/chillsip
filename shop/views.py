@@ -1,3 +1,4 @@
+import random
 from django.shortcuts import render,redirect,get_object_or_404
 from .models import *
 from .forms import *
@@ -21,13 +22,13 @@ class ProductListView(ListView):
     paginate_by = 8
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('?')
         self.category = None
         category_slug = self.kwargs.get('category_slug')
 
         if category_slug:
             self.category = get_object_or_404(Category, slug=category_slug)
-            queryset = queryset.filter(category=self.category)
+            queryset = queryset.filter(category=self.category).order_by('-created')
 
         return queryset
 
@@ -36,7 +37,9 @@ class ProductListView(ListView):
         context['categories'] = Category.objects.all()
         context['category'] = self.category
         context['site_section'] = 'product_list'
-
+        products = Product.objects.exclude(image__isnull=True).exclude(image='')
+        if len(products) >= 20:
+            context['rand_products'] = random.sample(list(products), 20)
         return context
 
     def get_template_names(self):

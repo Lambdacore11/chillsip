@@ -30,7 +30,7 @@ services:
       sh -c "while ! nc -z ${DBHOST} ${DBPORT}; do sleep 1; done &&
         python manage.py migrate &&
         if [ -f dbdata.json ]; then
-        python manage.py loaddata dbdata.json --exclude=contenttypes --exclude=auth.permission &&
+        python manage.py loaddata dbdata.json --exclude=contenttypes --exclude=auth.permission --exclude=admin.logentry &&
         rm -f dbdata.json;
         fi &&
         python manage.py collectstatic --noinput &&
