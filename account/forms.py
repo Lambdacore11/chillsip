@@ -11,7 +11,7 @@ class UserRegisterForm(UserCreationForm):
         fields = ['username', 'email']
     
     def  clean_username(self):
-        username = super().clean_username()
+        username = self.cleaned_data.get('username')
 
         if len(username) < 5:
             raise forms.ValidationError('Имя пользователя должно быть не менее 5 символов')

@@ -31,9 +31,11 @@ class Theme {
 
         cur_theme = this.title;
         localStorage.setItem('theme', this.title);
-        const header_icon_theme = document.querySelector('.header_icon_theme');
-        if (header_icon_theme) {
-            header_icon_theme.src = `${window.STATIC_URL}images/${this.title}.png`;
+        const theme_icons = document.querySelectorAll('.themeIcon');
+        if (theme_icons.length) {
+            theme_icons.forEach(el=>{
+                el.src = `${window.STATIC_URL}images/${this.title}.png`;
+            })
         }
     } 
 }
@@ -63,6 +65,7 @@ const dark_theme = new Theme (
     '#03DAC6',
     'dark',
 )
+
 document.addEventListener('DOMContentLoaded', () => {
     if (cur_theme === 'light') {
         light_theme.set_theme();
