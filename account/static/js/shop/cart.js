@@ -23,6 +23,7 @@ $(document).ready(function() {
 
     const form = document.querySelector('.form');
     const feedback = document.querySelector('.formFeedback');
+   
 
     if (form && feedback) {
         form.addEventListener('submit',(ev)=>{
@@ -40,7 +41,27 @@ $(document).ready(function() {
             }
 
             if (errors === '') {
-                form.submit();
+                const popup = document.querySelector('.popup')
+                const popup_text = document.querySelector('.popup__text')
+                const yes = document.querySelector('#yes')
+                const no = document.querySelector('#no')
+                if (popup && popup_text && yes && no) {
+                    popup.classList.add('active')
+                    popup_text.textContent = `Улица: ${id_street.options[id_street.selectedIndex].text}\n\nДом: ${id_building.value}`
+                    if (id_apartment.value) {
+                        popup_text.textContent +=`\n\nКвартира: ${id_apartment.value}`
+                    }
+                    popup_text.textContent += '\n\n\nвсе верно?'
+                    yes.addEventListener('click',()=>{
+                        form.submit()
+                    })
+                    no.addEventListener('click',()=>{
+                        popup.classList.remove('active')
+                        console.log('sefsef');
+                        
+                    })
+                }
+                
             }
             else {
                 feedback.innerHTML = errors;

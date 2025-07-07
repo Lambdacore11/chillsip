@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block title %}О нас{% endblock title %}
 
 {% block content %}
@@ -11,22 +11,37 @@
             приятного перерыва и уютного вечера! Мы предлагаем широкий ассортимент высококачественного чая,
             свежих соков и ароматного кофе, чтобы удовлетворить любой вкус и настроение.
         </div>
+        <div class="galery">
+            <img class="galery__image" src="{% static 'images/about_galery/1.jpg' %}">
+            <img class="galery__image" src="{% static 'images/about_galery/2.jpg' %}">
+            <img class="galery__image" src="{% static 'images/about_galery/3.jpg' %}">
+            <img class="galery__image" src="{% static 'images/about_galery/4.jpg' %}">
+            <img class="galery__image" src="{% static 'images/about_galery/5.jpg' %}">
+            <img class="galery__image" src="{% static 'images/about_galery/6.jpg' %}">
+        </div>
         <h2 class="h2 margin-t2">что мы предлагаем:</h2>
-        <h3 class="h3">чай:</h2>
-        <div class="text">
-            От классических черных и зеленых сортов до экзотических травяных смесей и фруктовых композиций.
-            У нас вы найдете чай на любой случай: для бодрости, расслабления, укрепления иммунитета и просто для удовольствия.
-        </div>
-        <h3 class="h3">сок:</h3>
-        <div class="text">
-            Натуральные соки прямого отжима, богатые витаминами и микроэлементами. Выбирайте из разнообразия фруктовых и овощных вкусов,
-            чтобы зарядиться энергией и поддержать здоровье.
-        </div>
-        <h3 class="h3">кофе:</h3>
-        <div class="text">
-            Отборные зерна арабики и робусты, обжаренные с любовью и мастерством.
-            Насладитесь насыщенным ароматом и неповторимым вкусом свежесваренного кофе,
-            который подарит вам заряд бодрости на весь день.
+        <div class="accordeon">
+            <img src="{% static 'images/tea_set.jpg' %}" class="accordeon__title" data-id="1">
+            <div class="text accordeon__content" data-id="1" style="display: none;">
+                От классических черных и зеленых сортов до экзотических травяных смесей и фруктовых композиций.
+                У нас вы найдете чай на любой случай: для бодрости, расслабления, укрепления иммунитета и просто для удовольствия.
+            </div>
+            <img src="{% static 'images/juice_set.jpg' %}" class="accordeon__title" data-id="2">
+            <div class="text accordeon__content" data-id="2" style="display: none;">
+                Натуральные соки прямого отжима, богатые витаминами и микроэлементами. Выбирайте из разнообразия фруктовых и овощных вкусов,
+                чтобы зарядиться энергией и поддержать здоровье.
+            </div>
+            <img src="{% static 'images/coffee_set.jpg' %}" class="accordeon__title" data-id="3">
+            <div class="text accordeon__content" data-id="3" style="display: none;">
+                Отборные зерна арабики и робусты, обжаренные с любовью и мастерством.
+                Насладитесь насыщенным ароматом и неповторимым вкусом свежесваренного кофе,
+                который подарит вам заряд бодрости на весь день.
+            </div>
+            <img src="{% static 'images/snacks_set.jpg' %}" class="accordeon__title" data-id="4">
+            <div class="text accordeon__content" data-id="4" style="display: none;">
+                Насладитесь тщательно отобранными закусками — 
+                качество, вкус и удобство с доставкой на дом. 
+            </div>
         </div>
         <h2 class="h2 margin-t2">почему выбирают нас:</h2>
         <h3 class="h3">Высокое качество:</h3>
@@ -42,4 +57,5 @@
         <h3 class="h3"><a href="{% url 'shop:product_list' %}" class="link">Загляните в наш каталог</a> и откройте для себя мир восхитительных вкусов и ароматов!</h3>
         <h3 class="h3">chillSip - Наслаждайтесь каждым глотком</h3>
     </div>
-        {% endblock content %}
+    <script src="{% static 'js/shop/about.js' %}"></script>
+ {% endblock content %}

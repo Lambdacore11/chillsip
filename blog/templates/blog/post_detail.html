@@ -17,7 +17,7 @@
             {{ element }}
 		{% endfor %}
         <input type="hidden" name="post_id" value="{{ post.id }}">
-		<input class="form__submit" type="submit" value="Оставить комментарий">
+		<input class="button form__submit" type="submit" value="Оставить комментарий">
 	</form>
     {% for comment in comments %}
         <div class="comment">
@@ -30,7 +30,7 @@
             {% if user.id == comment.user.id %}
             <form action="{% url 'blog:comment_delete' comment.id %}" method="POST">
                 {% csrf_token %}
-                <input class="form__submit" type="submit" value="удалить коментарий">
+                <input class="button form__submit" type="submit" value="удалить коментарий">
             </form>
             {% endif %}
     {% empty %}

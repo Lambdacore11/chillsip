@@ -67,19 +67,19 @@
                 <form class="logout" action="{% url 'account:logout' %}" method="POST">
                     {% csrf_token %}
                     <button type="submit" class="button_exit">
-                        <img class="header__icon" src="{% static 'images/mobile_icons/exit.png' %}">
+                        <img class="header__icon" src="{% static 'images/mobile_icons/exit.png' %}" alt="выход">
                     </button>
                 </form>
             {% else %}
                 <a class="link link_altColor" href="{% url 'account:login' %}"><img class="header__icon" src="{% static 'images/mobile_icons/enter.png' %}"></a>
             {% endif %}
-           
-     
     </header>
+
     <div class="content">
         {% block content %}
         {% endblock content %}
     </div>
+
     <footer class="footer">
         <div class="footer__inner">
             <div class="footer__copy">
@@ -104,8 +104,8 @@
             </div>
         </div>
     </footer>
+    <script>window.STATIC_URL = "{% static '' %}"</script>  
+    <script src="{% static 'js/theme.js' %}"></script>
+    <script>document.body.classList.add('ready')</script>
 </body>
-<script>window.STATIC_URL = "{% static '' %}"</script>  
-<script src="{% static 'js/theme.js' %}"></script>
-<script>document.body.classList.add('ready')</script>
 </html>

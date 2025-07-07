@@ -37,7 +37,7 @@
                                 {% if user.id == feed.user.id %}
                                    <form action="{% url 'shop:review_delete' feed.id %}" method="POST">
                                         {% csrf_token %}
-                                        <input class="form__submit" type="submit" value="удалить коментарий">
+                                        <input class="button form__submit" type="submit" value="удалить коментарий">
                                    </form>
                                 {% endif %}
                             </div>
