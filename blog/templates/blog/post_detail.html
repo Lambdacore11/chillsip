@@ -34,8 +34,11 @@
             </form>
             {% endif %}
     {% empty %}
-        <div class="text">будьте первым кто оставит комментарий</div>
+        <div class="text text_italic">будьте первым кто оставит комментарий</div>
     {% endfor %}
-    {% include 'pagination.html' with page_obj=comments %}
+
+    {% if feedbacks %}
+        {% include 'pagination.html' with page_obj=comments %}
+    {% endif %}
 
 {% endblock content %}

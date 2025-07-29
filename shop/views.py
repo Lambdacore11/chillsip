@@ -6,6 +6,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin,AccessMixin
 from django.db.models import F
 from django.views.generic import DetailView,ListView,View,TemplateView,FormView
 from django.db import transaction
+from django.core.paginator import Paginator
+
 
 
 class AboutTemplateView(TemplateView):
@@ -64,7 +66,12 @@ class ProductDetailView(DetailView):
 
         context['is_product_in_cart'] = is_product_in_cart
 
+        feedbacks = self.object.feedback.exclude(review__isnull=True).exclude(review='')
+        paginator = Paginator(feedbacks,3)
+        page = self.request.GET.get('page')
+        context['feedbacks'] = paginator.get_page(page)
         return context
+
 
 
 class CartListView(LoginRequiredMixin,ListView):

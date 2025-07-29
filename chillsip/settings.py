@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
 
@@ -58,8 +58,8 @@ DATABASES = {
         'NAME': config('DBNAME'),
         'USER':config('DBUSER'),
         'PASSWORD':config('DBPASSWORD'),
-        # 'HOST':config('DBHOST'),
-        # 'PORT':config('DBPORT')
+        'HOST':config('DBHOST'),
+        'PORT':config('DBPORT')
     }
 }
 
