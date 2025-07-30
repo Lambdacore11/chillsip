@@ -12,7 +12,14 @@ services:
       POSTGRES_PASSWORD: ${DBPASSWORD}
     ports:
       - "5432:5432"
-
+  redis:
+    image: redis:7.2-alpine
+    networks:
+      - chillsip_network
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
   web:
     build: .
     networks:
@@ -24,6 +31,7 @@ services:
       - .env
     depends_on:
       - db
+      - redis
     ports:
     - "8000:8000"
     command: >
@@ -57,3 +65,4 @@ volumes:
   static_volume:
   media_volume:
   pgdata:
+  redisdata:

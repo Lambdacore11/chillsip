@@ -58,8 +58,8 @@ DATABASES = {
         'NAME': config('DBNAME'),
         'USER':config('DBUSER'),
         'PASSWORD':config('DBPASSWORD'),
-        # 'HOST':config('DBHOST'),
-        # 'PORT':config('DBPORT')
+        'HOST':config('DBHOST'),
+        'PORT':config('DBPORT')
     }
 }
 
@@ -106,3 +106,23 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+REDIS_HOST = config('REDIS_HOST')
+REDIS_PORT = config('REDIS_PORT')
+REDIS_DB = config('REDIS_DB')
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+            "IGNORE_EXCEPTIONS": True,
+        },
+        "KEY_PREFIX": "chillsip"
+    }
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"

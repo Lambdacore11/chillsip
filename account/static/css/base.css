@@ -198,6 +198,9 @@ button:hover {
     font-style: italic;
     font-size: 0.9rem;
 }
+.text_center {
+    align-self: center;
+}
 .text_mono {
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
@@ -368,6 +371,11 @@ select,option {
     width: 100%;
 }
 
+.recommended {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
 .table {
     border-collapse: collapse;
 }

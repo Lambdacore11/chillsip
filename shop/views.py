@@ -8,6 +8,7 @@ from django.views.generic import DetailView,ListView,View,TemplateView,FormView
 from django.http import JsonResponse
 from django.db import transaction
 from django.core.paginator import Paginator
+from .recommender import Recommender
 
 
 
@@ -87,6 +88,9 @@ class CartListView(LoginRequiredMixin,ListView):
         cart = context['cart']
         context['form'] = kwargs.get('form', OrderForm())
         context['total'] = sum(product.get_cost() for product in cart)
+        cart_products = [item.product for item in context['cart']]
+        if cart_products:
+            context['recommended_products'] = Recommender().suggest_products_for(cart_products)
         context['site_section'] = 'cart'
 
         return context
@@ -211,14 +215,16 @@ class OrderCreateView(LoginRequiredMixin,View):
                     price = total,
 
                 )
+                products = []
                 for item in cart:
+                    products.append(item.product)
                     ProductInOrder.objects.create (
                         product = item.product,
                         price = item.price,
                         order = order,
                         count = item.count,
                     )
-
+                Recommender().products_bought(products)
                 cart.delete()
                 user.account = F('account') - total
                 user.save(update_fields=['account'])
