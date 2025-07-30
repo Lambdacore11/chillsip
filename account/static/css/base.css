@@ -21,6 +21,12 @@
     text-decoration: none;
 }
 
+button {
+    background-color: inherit;
+}
+button:hover {
+    cursor: pointer;
+}
 .body {
     background-color: var(--bgc1);
     opacity: 0;

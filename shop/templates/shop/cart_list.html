@@ -30,12 +30,12 @@
                         </td>
                         <td class="td">{{ item.product }}</td>
                         <td class="td">
-                            <a href="{% url 'shop:cart_decrement' item.id %}">&lt;</a> 
-                            {{ item.count }}
-                            <a href="{% url 'shop:cart_increment' item.id %}">&gt;</a> 
+                            <button data-id="{{ forloop.counter }}" data-url="{% url 'shop:cart_decrement' item.id %}" class="decrementCartItem">&lt;</button>
+                            <span id="cartItemCount{{ forloop.counter }}">{{ item.count }}</span>
+                            <button data-id="{{ forloop.counter }}" data-url="{% url 'shop:cart_increment' item.id %}" class="incrementCartItem">&gt;</button>
                         </td>
-                        <td class="td">{{ item.price }}₽</td>
-                        <td class="td">{{ item.get_cost }}₽</td>
+                        <td id="cartItemPrice{{ forloop.counter }}" class="td">{{ item.price }}₽</td>
+                        <td id="cartItemTotalPrice{{ forloop.counter }}" class="td">{{ item.get_cost }}₽</td>
                         <td class="td">
                             <a href="{% url 'shop:cart_delete' item.id %}"><img class="table__image" src="{% static 'images/delete.png' %}"></a>
                         </td>
@@ -43,7 +43,10 @@
                 
                 {% endfor %}
                 <tr>
-                    <td colspan="6" class="td td_total">всего: {{ total }}₽</td>
+                    <td colspan="6" class="td td_total">
+                        <span>Всего:</span>
+                        <span id="cartTotalPrice">{{ total }}₽</span>
+                    </td>
                 </tr>
         </table>
 

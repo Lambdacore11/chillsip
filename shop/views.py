@@ -5,6 +5,7 @@ from .forms import *
 from django.contrib.auth.mixins import LoginRequiredMixin,AccessMixin
 from django.db.models import F
 from django.views.generic import DetailView,ListView,View,TemplateView,FormView
+from django.http import JsonResponse
 from django.db import transaction
 from django.core.paginator import Paginator
 
@@ -145,7 +146,17 @@ class CartIncrementView(LoginRequiredMixin,View):
                 cart_item.save(update_fields=['count'])
                 cart_item.refresh_from_db()
 
-        return redirect('shop:cart_list')
+            return JsonResponse(
+                
+                {
+                    'success':True,
+                    'new_count':cart_item.count,
+                }
+            )
+        return JsonResponse(
+            {'success':False},
+            status=400
+        )
 
 
 class CartDecrementView(LoginRequiredMixin,View):
@@ -163,8 +174,17 @@ class CartDecrementView(LoginRequiredMixin,View):
                 cart_item.save(update_fields=['count'])
                 cart_item.refresh_from_db()
 
-        return redirect('shop:cart_list')
-
+            return JsonResponse(
+                {
+                    'success':True,
+                    'new_count':cart_item.count,
+                }
+            )
+        
+        return JsonResponse(
+            {'success':False},
+            status=400
+        )
 
 class OrderCreateView(LoginRequiredMixin,View):
     def post(self,request,*args,**kwargs):

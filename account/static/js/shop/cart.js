@@ -68,4 +68,81 @@ $(document).ready(function() {
             }
         })
     }
+
+    const incrementCartItem = document.querySelectorAll('.incrementCartItem');
+    const decrementCartItem = document.querySelectorAll('.decrementCartItem');
+    const cartTotalPrice = document.querySelector('#cartTotalPrice');
+
+    if (incrementCartItem.length && cartTotalPrice ) {
+        incrementCartItem.forEach(el=>{
+            el.addEventListener('click', (e) =>{
+                e.preventDefault()
+                const url = el.dataset['url']
+                fetch(url,   
+                    {
+                        method:'GET',
+                        headers:{
+                        'X-Requested-With': 'XMLHttpRequest', 
+                        }
+                    }
+                )
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const cartItemCount = document.querySelector(`#cartItemCount${el.dataset['id']}`);
+                        const cartItemPrice = document.querySelector(`#cartItemPrice${el.dataset['id']}`);
+                        const cartItemTotalPrice = document.querySelector(`#cartItemTotalPrice${el.dataset['id']}`);
+
+                        if (cartItemCount && cartItemPrice && cartItemTotalPrice) {
+                            cartItemCount.textContent =  data.new_count;
+                            cartItemTotalPrice.textContent = ((parseFloat(cartItemTotalPrice.textContent.replace(',','.')) + parseFloat(cartItemPrice.textContent.replace(',','.'))).toFixed(2) + '₽').replace('.',',');
+                            cartTotalPrice.textContent = ((parseFloat(cartTotalPrice.textContent.replace(',','.')) + parseFloat(cartItemPrice.textContent.replace(',','.'))).toFixed(2) + '₽').replace('.',',');
+                        }
+                    }
+                    
+                })
+                .catch(error =>{
+                    console.error('Error:',error)
+                })
+            })
+        })
+        
+    }
+
+    if (decrementCartItem.length && cartTotalPrice ) {
+        decrementCartItem.forEach(el=>{
+            el.addEventListener('click', (e) =>{
+                e.preventDefault()
+                const url = el.dataset['url']
+                fetch(url,   
+                    {
+                        method:'GET',
+                        headers:{
+                        'X-Requested-With': 'XMLHttpRequest', 
+                        }
+                    }
+                )
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const cartItemCount = document.querySelector(`#cartItemCount${el.dataset['id']}`);
+                        const cartItemPrice = document.querySelector(`#cartItemPrice${el.dataset['id']}`);
+                        const cartItemTotalPrice = document.querySelector(`#cartItemTotalPrice${el.dataset['id']}`);
+
+                        if (cartItemCount && cartItemPrice && cartItemTotalPrice) {
+                            cartItemCount.textContent =  data.new_count;
+                            cartItemTotalPrice.textContent = ((parseFloat(cartItemTotalPrice.textContent.replace(',','.')) - parseFloat(cartItemPrice.textContent.replace(',','.'))).toFixed(2) + '₽').replace('.',',');
+                            cartTotalPrice.textContent = ((parseFloat(cartTotalPrice.textContent.replace(',','.')) - parseFloat(cartItemPrice.textContent.replace(',','.'))).toFixed(2).replace('.',',') + '₽').replace('.',',');
+                        }
+                    }
+                    
+                })
+                .catch(error =>{
+                    console.error('Error:',error)
+                })
+            })
+        })
+        
+    }
+
 });
