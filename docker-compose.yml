@@ -1,5 +1,4 @@
 services:
-
   db:
     image: postgres:17.5-alpine
     networks:
@@ -36,14 +35,13 @@ services:
     - "8000:8000"
     command: >
       sh -c "while ! nc -z ${DBHOST} ${DBPORT}; do sleep 1; done &&
-        python manage.py migrate &&
+        python manage.py migrate --noinput &&
         if [ -f dbdata.json ]; then
         python manage.py loaddata dbdata.json --exclude=contenttypes --exclude=auth.permission --exclude=admin.logentry &&
         rm -f dbdata.json;
         fi &&
         python manage.py collectstatic --noinput &&
-        gunicorn chillsip.wsgi:application --bind 0.0.0.0:8000 --workers 2"
-
+        gunicorn chillsip.wsgi:application --bind 0.0.0.0:8000 --workers 4"
   nginx:
     image: nginx:1.27-alpine
     networks:

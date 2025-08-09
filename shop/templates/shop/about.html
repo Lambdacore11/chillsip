@@ -1,8 +1,12 @@
 {% extends 'base.html' %}
+
 {% load static %}
+{% load cache %}
+
 {% block title %}О нас{% endblock title %}
 
 {% block content %}
+{% cache 86399 about %}
     <div class="about">
         <h1 class="h1">ChillSip - Ваш источник бодрости и вкуса!</h1>
         <div class="text">
@@ -58,4 +62,5 @@
         <h3 class="h3">chillSip - Наслаждайтесь каждым глотком</h3>
     </div>
     <script src="{% static 'js/shop/about.js' %}"></script>
- {% endblock content %}
+{% endcache about %}
+{% endblock content %}

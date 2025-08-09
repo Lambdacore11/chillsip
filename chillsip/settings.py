@@ -112,17 +112,22 @@ REDIS_PORT = config('REDIS_PORT')
 REDIS_DB = config('REDIS_DB')
 
 CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
-            "IGNORE_EXCEPTIONS": True,
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'SOCKET_TIMEOUT': 2,
+            'SOCKET_CONNECT_TIMEOUT': 2,
+            'CONNECTION_POOL_KWARGS': {'max_connections': 100},
+            'IGNORE_EXCEPTIONS': True,
         },
-        "KEY_PREFIX": "chillsip"
-    }
+        'KEY_PREFIX': 'redis_'
+    },
 }
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db' 
+SESSION_CACHE_ALIAS = 'default'
+
+

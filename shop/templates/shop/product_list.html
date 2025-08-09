@@ -8,12 +8,13 @@
     <div class="splide" role="group" aria-label="Splide Basic HTML Example">
         <div class="splide__track">
 		    <div class="splide__list">
-                {% for product in rand_products%}
+                {% for product in random_products %}
                     <a class="splide__slide" href="{{ product.get_absolute_url }}"><img src="{{product.image.url}}"></a>
                 {% endfor %}
             </div>
         </div>
     </div>
+
     <div class="catalog">
         <div class="sidebar">
             <h3 class="h3">меню</h3>

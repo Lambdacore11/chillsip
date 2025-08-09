@@ -9,6 +9,17 @@
     --blc:#DA6A00;
     --blch:#EE9B01;
 }
+:root.dark {
+    --tc1:#FFFFFF;
+    --tc2:#FFFFFF;
+    --tc3:#CF6679;
+    --bgc1:#1E1E1E;
+    --bgc2:#121212;
+    --bgc3:#121212;
+    --bgc4:#121212;
+    --blc:#BB86FC;
+    --blch:#03DAC6;
+}
 
 * {
     margin: 0;
@@ -30,12 +41,13 @@ button:hover {
 .body {
     background-color: var(--bgc1);
     opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.5s ease;
+    transition: 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .body.ready {
-        opacity: 1;
-        visibility: visible;
+    opacity: 1;
+    transition-property: color, background-color;
+    transition-duration: 0.4s;
+    transition-timing-function: ease-out;
 }
 
 .header {

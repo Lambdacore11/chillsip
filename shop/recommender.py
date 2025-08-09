@@ -16,7 +16,6 @@ class Recommender:
     
     def products_bought(self,products):
         product_ids = [str(p.id) for p in products]
-        print(product_ids)
         for product_id in product_ids:
             for with_id in product_ids:
                 if product_id != with_id:
@@ -24,6 +23,7 @@ class Recommender:
     
     def suggest_products_for(self,products,max_results=4):
         product_ids = [str(p.id) for p in products]
+        
         if len(products) == 1:
             suggestions = r.zrange(self.get_product_key(product_ids[0]),0,-1,desc=True)[:max_results]
         

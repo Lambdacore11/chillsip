@@ -1,62 +1,76 @@
 {% load static %}
+{% load cache %}
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preload" href="{% static 'images/light.png' %}" as="image"/>
+    <link rel="preload" href="{% static 'images/dark.png' %}" as="image"/>
+    <script>
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.className = savedTheme || (prefersDark ? 'dark' : 'light');
+    </script>
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <title>{% block title %}{% endblock title %}</title>
 </head>
 <body class="body">
     <header class="header">
         <div class="header__desktop">
-                <a class="logo" href="/" >
-                    <img class="logo__image" src="{% static 'images/logo.jpg' %}">
-                    <div class="logo__title">
-                        <span class="logo__titleLeft">Chill</span>
-                        <span class="logo__titleRight">Sip</span>
-                    </div>
-                </a>
-                <nav class="nav">
-                    <a class="link link_altColor {% if site_section == 'about' %}link_selected link_altBorder {% endif %}" href="{% url 'shop:about' %}">о нас</a>
-                    <a class="link link_altColor {% if site_section == 'product_list' %}link_selected link_altBorder {% endif %}" href="{% url 'shop:product_list' %}">каталог</a>
-                    <a class="link link_altColor {% if site_section == 'cart' %}link_selected link_altBorder {% endif %}" href="{% url 'shop:cart_list' %}">корзина</a>
-                    <a class="link link_altColor {% if site_section == 'order_list' %}link_selected link_altBorder {% endif %}" href="{% url 'shop:order_list' %}">мои заказы</a>
-                    <a class="link link_altColor {% if site_section == 'post_list' %}link_selected link_altBorder {% endif %}" href="{% url 'blog:post_list' %}">блог</a>
-                </nav>
-                <div class="auth">
-                    <button type="button" class="button_theme">
-                        <img class="header__icon themeIcon" src="{% static 'images/dark.png' %}">
-                    </button>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'account:money_update' user.slug %}">
-                           <div class="text text_altColor">{{ user.account }}₽</div>
-                        </a>
-                        <a href="{% url 'account:profile' user.slug %}">
-                            <img class="userFoto" src="{% if user.foto %}{{user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
-                        </a>
-                        <form class="logout" action="{% url 'account:logout' %}" method="POST">
-                            {% csrf_token %}
-                            <input class="link link_altColor" type="submit" value="Выйти">
-                        </form>
-                    {% else %}
-                        <a class="link link_altColor" href="{% url 'account:login' %}">войти</a>
-                    {% endif %}
+            <a class="logo" href="/" >
+                <img class="logo__image" src="{% static 'images/logo.jpg' %}">
+                <div class="logo__title">
+                    <span class="logo__titleLeft">Chill</span>
+                    <span class="logo__titleRight">Sip</span>
                 </div>
+            </a>
+            <nav class="nav">
+                <a class="link link_altColor {% if site_section == 'about' %}link_selected link_altBorder {% endif %}" href="{% url 'shop:about' %}">о нас</a>
+                <a class="link link_altColor {% if site_section == 'product_list' %}link_selected link_altBorder {% endif %}" href="{% url 'shop:product_list' %}">каталог</a>
+                <a class="link link_altColor {% if site_section == 'cart' %}link_selected link_altBorder {% endif %}" href="{% url 'shop:cart_list' %}">корзина</a>
+                <a class="link link_altColor {% if site_section == 'order_list' %}link_selected link_altBorder {% endif %}" href="{% url 'shop:order_list' %}">мои заказы</a>
+                <a class="link link_altColor {% if site_section == 'post_list' %}link_selected link_altBorder {% endif %}" href="{% url 'blog:post_list' %}">блог</a>
+            </nav>
+            <div class="auth">
+
+                <button type="button" class="button_theme">
+                    <img class="header__icon themeIcon" src="{% static 'images/dark.png' %}">
+                </button>
+                
+                {% if user.is_authenticated %}
+                    <a href="{% url 'account:money_update' user.slug %}">
+                        <div class="text text_altColor">{{ user.account }}₽</div>
+                    </a>
+                    <a href="{% url 'account:profile' user.slug %}">
+                        <img class="userFoto" src="{% if user.foto %}{{user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
+                    </a>
+                    <form class="logout" action="{% url 'account:logout' %}" method="POST">
+                        {% csrf_token %}
+                        <input class="link link_altColor" type="submit" value="Выйти">
+                    </form>
+                {% else %}
+                    <a class="link link_altColor" href="{% url 'account:login' %}">войти</a>
+                {% endif %}
+            </div>
         </div>
 
         <div class="header__mobile">
             <a class="logo" href="/" >
                 <img class="logo__image" src="{% static 'images/logo.jpg' %}">
             </a>
+
             <a  href="{% url 'shop:about' %}"><img class="header__icon"  src="{% static 'images/mobile_icons/about.png' %}"></a>
             <a  href="{% url 'shop:product_list' %}"><img class="header__icon" src="{% static 'images/mobile_icons/home.png' %}"></a>
             <a  href="{% url 'shop:cart_list' %}"><img class="header__icon" src="{% static 'images/mobile_icons/cart.png' %}"></a>
             <a  href="{% url 'shop:order_list' %}"><img  class="header__icon"src="{% static 'images/mobile_icons/orders.png' %}"></a>
             <a  href="{% url 'blog:post_list' %}"><img class="header__icon" src="{% static 'images/mobile_icons/blog.png' %}"></a>
+
             <button type="button" class="button_theme">
                 <img class="header__icon themeIcon" src="{% static 'images/dark.png' %}">
             </button>
+
             {% if user.is_authenticated %}
                 <a href="{% url 'account:money_update' user.slug %}">
                     <div class="text text_altColor ">{{ user.account }}₽</div>
@@ -79,7 +93,7 @@
         {% block content %}
         {% endblock content %}
     </div>
-
+    {% cache 86399 footer %}
     <footer class="footer">
         <div class="footer__inner">
             <div class="footer__copy">
@@ -104,8 +118,8 @@
             </div>
         </div>
     </footer>
+    {% endcache footer %}
     <script>window.STATIC_URL = "{% static '' %}"</script>  
     <script src="{% static 'js/theme.js' %}"></script>
-    <script>document.body.classList.add('ready')</script>
 </body>
 </html>

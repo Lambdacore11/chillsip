@@ -1,15 +1,14 @@
-import random
 from django.shortcuts import render,redirect,get_object_or_404
 from .models import *
 from .forms import *
 from django.contrib.auth.mixins import LoginRequiredMixin,AccessMixin
+from django.core.cache import cache
 from django.db.models import F
 from django.views.generic import DetailView,ListView,View,TemplateView,FormView
 from django.http import JsonResponse
 from django.db import transaction
 from django.core.paginator import Paginator
 from .recommender import Recommender
-
 
 
 class AboutTemplateView(TemplateView):
@@ -24,26 +23,52 @@ class ProductListView(ListView):
     template_name = 'shop/product_list.html'
     context_object_name = 'products'
     paginate_by = 8
-
+    
     def get_queryset(self):
-        queryset = super().get_queryset()
-        self.category = None
+       
         category_slug = self.kwargs.get('category_slug')
+        cache_key = f"product_{category_slug or 'all'}"
+        
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            queryset,self.category = cached_data
+            return queryset
+        
+        queryset = super().get_queryset().defer('count','price')
+        self.category = None
 
         if category_slug:
-            self.category = get_object_or_404(Category, slug=category_slug)
+            category_cache_key = f'category:{category_slug}'
+            self.category = cache.get(category_cache_key)
+
+            if not self.category:
+                self.category = get_object_or_404(Category,slug=category_slug)
+                cache.set(cache_key,(queryset,self.category,60 * 60 * 24))
+            
             queryset = queryset.filter(category=self.category)
+        
+        cache.set(cache_key, (queryset, self.category), 60 * 60)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.all()
+        context['categories'] = cache.get_or_set(
+            'category_all',
+            lambda: Category.objects.all(),
+            60 * 60 * 24,
+        ) 
+        context['random_products'] = cache.get_or_set(
+            'random_products',
+            lambda: list(Product.objects.exclude(image__isnull=True)
+                        .exclude(image='')
+                        .order_by('?')[:20]
+            ),
+            60 * 60,
+        )
         context['category'] = self.category
         context['site_section'] = 'product_list'
-        products = Product.objects.exclude(image__isnull=True).exclude(image='')
-        if len(products) >= 20:
-            context['rand_products'] = random.sample(list(products), 20)
+
         return context
 
     def get_template_names(self):
@@ -90,7 +115,11 @@ class CartListView(LoginRequiredMixin,ListView):
         context['total'] = sum(product.get_cost() for product in cart)
         cart_products = [item.product for item in context['cart']]
         if cart_products:
-            context['recommended_products'] = Recommender().suggest_products_for(cart_products)
+            try:
+                context['recommended_products'] = Recommender().suggest_products_for(cart_products)
+            except Exception as e:
+                print(e)
+                pass
         context['site_section'] = 'cart'
 
         return context
@@ -224,7 +253,14 @@ class OrderCreateView(LoginRequiredMixin,View):
                         order = order,
                         count = item.count,
                     )
-                Recommender().products_bought(products)
+
+                try:
+                    Recommender().products_bought(products)
+
+                except Exception as e:
+                    print(e)
+                    pass
+                
                 cart.delete()
                 user.account = F('account') - total
                 user.save(update_fields=['account'])
