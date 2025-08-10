@@ -29,11 +29,13 @@
                             {% if feed.review  %}
                             <div class="comment">
                                 <div class="user">
-                                    <img class="userFoto" src="{% if feed.user.foto %}{{feed.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
-                                    <div class="text text_italic">{{ feed.user.username }}</div>
+                                    <div class="user__top">
+                                        <img class="userFoto" src="{% if feed.user.foto %}{{feed.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
+                                        <div class="text text_italic">{{ feed.user.username }}</div>
+                                    </div>
                                 </div>
-                                <div class="text">{{ feed.review }}</div>
                                 <div class="text text_italic">{{ feed.created }}</div>
+                                <div class="text text_break">{{ feed.review }}</div>
                                 {% if user.id == feed.user.id %}
                                    <form action="{% url 'shop:review_delete' feed.id %}" method="POST">
                                         {% csrf_token %}

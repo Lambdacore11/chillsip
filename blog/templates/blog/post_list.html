@@ -14,10 +14,12 @@
                 <a class="link" href="{{ post.get_absolute_url }}">{{ post.name|truncatewords:30 }}</a>
                     <div class="text">{{ post.content|truncatewords:30 }}</div>
                     <div class="user">
-                        <img class="userFoto" src="{% if post.user.foto %}{{post.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
-                        <div class="text text_italic">{{ post.user.username }}</div>
+                        <div class="user__top">
+                            <img class="userFoto" src="{% if post.user.foto %}{{post.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
+                            <div class="text text_italic">{{ post.user.username }}</div>
+                        </div>
+                        <div class="text text_italic">{{ post.created }}</div>
                     </div>
-                    <div class="text text_italic">{{ post.created }}</div>
             </div>
         {% endfor %}
     </div>

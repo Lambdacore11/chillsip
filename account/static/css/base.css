@@ -225,6 +225,9 @@ button:hover {
 .text_right {
     justify-self: flex-end;
 }
+text_break {
+    word-break: break-all;
+}
 
 .form {
     display: flex;
@@ -454,7 +457,12 @@ select,option {
     padding-bottom: 1rem;
     width: 100%
 }
-.user{
+.user {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.user__top{
     display: flex;
     align-items: center;
     gap: 0.5rem;

@@ -21,23 +21,26 @@
 	</form>
     {% for comment in comments %}
         <div class="comment">
-            <div class="user">
-                <img class="userFoto" src="{% if comment.user.foto %}{{comment.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
-                <div class="text text_italic">{{ comment.user.username }}</div>
-            </div>
-            <div class="text">{{ comment.content }}</div>
-            <div class="text text_italic">{{ comment.created }}</div>
+                <div class="user">
+                    <div class="user__top">
+                        <img class="userFoto" src="{% if comment.user.foto %}{{comment.user.foto.url}}{% else %}{% static 'images/profile.jpg' %}{% endif %}">
+                        <div class="text text_italic">{{ comment.user.username }}</div>
+                    </div>
+                     <div class="text text_italic">{{ comment.created }}</div>
+                </div>
+                <div class="text text_break">{{ comment.content }}</div>
             {% if user.id == comment.user.id %}
             <form action="{% url 'blog:comment_delete' comment.id %}" method="POST">
                 {% csrf_token %}
                 <input class="button form__submit" type="submit" value="удалить коментарий">
             </form>
             {% endif %}
+        </div>
     {% empty %}
         <div class="text text_italic">будьте первым кто оставит комментарий</div>
     {% endfor %}
 
-    {% if feedbacks %}
+    {% if comments %}
         {% include 'pagination.html' with page_obj=comments %}
     {% endif %}
 
